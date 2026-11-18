@@ -1,0 +1,79 @@
+name: Bug report
+description: Something in Caddi behaves incorrectly and you can reproduce it.
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **Do not use this form for a security problem.** Report vulnerabilities privately through this repository's Security tab; see the security policy.
+
+        Never paste a password, token, cookie or anything from a real account. Reproduce on a test page where you can.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you file
+      options:
+        - label: This is not a security vulnerability.
+          required: true
+        - label: I searched existing issues and did not find this one.
+          required: true
+        - label: My report contains no credentials or personal browsing data.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+      placeholder: After I approved Claude Code for one workspace, the Agents dialog still showed the request as waiting.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The exact clicks or commands, from a known starting state.
+      placeholder: |
+        1. Open Caddi and create a project workspace
+        2. Open the Agents dialog and choose Connect next to Claude Code
+        3. Start Claude Code and approve the request
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output, logs or error text
+      description: Paste anything relevant, with secrets removed. This is rendered as a code block.
+      render: shell
+  - type: dropdown
+    id: install
+    attributes:
+      label: How are you running Caddi?
+      options:
+        - The signed build from caddi.build
+        - From source (npm start)
+        - A bundle I packaged myself
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Caddi version
+      description: The version in Caddi's About window, or the commit you are on (git rev-parse --short HEAD).
+      placeholder: '0.1.3 or commit abc1234'
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Mac and macOS version
+      placeholder: 'MacBook Pro M3, macOS 26.2'
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Coding agent, if one is involved
+      placeholder: 'Claude Code 2.1, Codex, Cursor, OpenCode'

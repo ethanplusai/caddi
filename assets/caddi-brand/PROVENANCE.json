@@ -1,0 +1,31 @@
+{
+  "format": "caddi-development-icon-source-v2",
+  "recordedAt": "2026-11-16",
+  "sourcePath": "assets/caddi-brand/caddi-icon.svg",
+  "destinationPath": "assets/caddi-brand/Caddi-development.icns",
+  "sha256": "5968ec1e9fb9af780de32a6fb1321883568bb747a9b2addc01bbb915930af059",
+  "bytes": 822896,
+  "transform": "The SVG master was rendered to a 1024 px PNG, scaled to the ten standard macOS icon sizes with sips, and packed with iconutil. caddi-icon-512.png is the 512 px size, used for the Dock icon in source runs.",
+  "construction": "Original three-path Caddi clubs-and-cuff mark in white on a near-black rounded-square plate, with a top highlight, a light rim and a soft shadow drawn as SVG gradients and filters. No font, photograph or third-party artwork.",
+  "identityApproval": "Compact Caddi mark direction accepted by the owner on 2026-10-24. Dark plate with white mark requested by the owner on 2026-11-16.",
+  "scope": "Unsigned local Caddi Development package and source runs. Distribution signing remains separate. Bundle, profile, IPC and credential identifiers are unchanged.",
+  "installer": {
+    "recordedAt": "2026-11-16",
+    "sourcePath": "assets/caddi-brand/dmg-background.svg",
+    "rendered": [
+      {
+        "path": "assets/caddi-brand/dmg-background.png",
+        "bytes": 111865,
+        "sha256": "bd656e4358d9155a63cb98ba4e1391652d3dec43d77650d1cf567a9e40b648b9"
+      },
+      {
+        "path": "assets/caddi-brand/dmg-background@2x.png",
+        "bytes": 377163,
+        "sha256": "6bcac1a2ca899fcf871f978aa465b55fc336a5dd52f5f332fd70aa7dc76f4537"
+      }
+    ],
+    "transform": "The SVG was rendered with sips at 660 by 420 and 1320 by 840 pixels. scripts/make-dmg.mjs joins the two into one background.tiff with tiffutil when it builds the disk image.",
+    "construction": "Original artwork drawn as SVG gradients, one drop shadow and two lines of text set in the system font: a near-black plate with a top highlight, a light tray for the two icons, and an arrow. No photograph or third-party artwork.",
+    "scope": "Background of the Caddi installer disk image window. The in-app welcome uses a copy of caddi-icon.svg at src/caddi/desktop/ui/brand/caddi-icon.svg."
+  }
+}

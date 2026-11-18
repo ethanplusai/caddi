@@ -1,0 +1,4 @@
+url,username,password,totp,extra,name,grouping,fav
+https://app.example.com/,ada@example.test,lp-pass-1,,,Example,Work,0
+http://insecure.example.test,cy@example.test,lp-pass-2,,,Insecure,,0
+http://sn,,,,,Secure note,,0

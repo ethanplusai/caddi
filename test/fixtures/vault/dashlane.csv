@@ -1,0 +1,3 @@
+username,username2,username3,title,password,note,url,category,otpSecret
+ada@example.test,,,Example,dl-pass-1,,https://app.example.com,Work,
+bo@example.test,,,Mobile app,dl-pass-2,,android://com.example.app,,

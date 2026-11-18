@@ -1,0 +1,4 @@
+name,url,username,password,note
+app.example.com,https://app.example.com/signin,ada@example.test,ch-pass-1,
+local,http://localhost:3000/,dev,ch-pass-2,
+nopass,https://empty.example.test/,ed@example.test,,

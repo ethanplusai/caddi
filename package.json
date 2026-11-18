@@ -1,0 +1,63 @@
+{
+  "name": "caddi",
+  "version": "0.1.3",
+  "private": true,
+  "license": "MIT",
+  "description": "Caddi: a Mac browser for working with coding agents. Isolated project workspaces, on-page annotation and scoped agent access.",
+  "homepage": "https://caddi.build",
+  "bugs": {
+    "url": "https://github.com/ethanplusai/caddi/issues"
+  },
+  "keywords": [
+    "browser",
+    "macos",
+    "electron",
+    "mcp",
+    "coding-agents",
+    "claude-code",
+    "codex",
+    "cursor",
+    "opencode",
+    "developer-tools"
+  ],
+  "type": "module",
+  "main": "src/caddi/desktop/main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.mjs",
+    "test:caddi": "node --test test/caddi-*.test.mjs",
+    "caddi:demo": "node scripts/caddi-demo.mjs",
+    "caddi:dev": "electron src/caddi/desktop/main.mjs",
+    "test:desktop": "electron src/caddi/desktop/main.mjs --caddi-smoke",
+    "test:desktop:workspaces": "electron src/caddi/desktop/main.mjs --caddi-workspace-smoke",
+    "test:desktop:scale": "electron src/caddi/desktop/main.mjs --caddi-scale-smoke",
+    "test:desktop:capacity": "electron src/caddi/desktop/main.mjs --caddi-capacity-smoke",
+    "test:desktop:extension": "electron test/caddi-desktop-extension-smoke.mjs",
+    "caddi:mcp": "node scripts/caddi-client.mjs mcp",
+    "caddi:fixtures": "node scripts/caddi-fixtures.mjs",
+    "package:caddi": "node scripts/package-caddi.mjs",
+    "dev": "electron .",
+    "test:desktop:annotate": "electron src/caddi/desktop/main.mjs --caddi-annotate-smoke",
+    "test:desktop:live": "electron src/caddi/desktop/main.mjs --caddi-live-smoke",
+    "test:desktop:board": "electron src/caddi/desktop/main.mjs --caddi-board-smoke",
+    "test:desktop:logins": "electron src/caddi/desktop/main.mjs --caddi-logins-smoke",
+    "test:desktop:browser-use": "electron src/caddi/desktop/main.mjs --caddi-browser-use-smoke",
+    "test:desktop:extraction": "electron src/caddi/desktop/main.mjs --caddi-extraction-smoke",
+    "test:desktop:everyday": "electron src/caddi/desktop/main.mjs --caddi-everyday-smoke",
+    "test:ui": "electron src/caddi/desktop/main.mjs --caddi-ui-gallery-smoke",
+    "package:caddi:signed": "node scripts/package-caddi.mjs --without-speech --sign",
+    "notarize:caddi": "node scripts/notarize-caddi.mjs",
+    "package:caddi:release": "node scripts/package-caddi.mjs --release --sign",
+    "dmg:caddi": "node scripts/make-dmg.mjs"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "electron": "45.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ethanplusai/caddi.git"
+  }
+}

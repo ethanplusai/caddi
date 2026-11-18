@@ -1,0 +1,47 @@
+name: Feature request
+description: Suggest a capability or a change in behaviour.
+title: '[Feature]: '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the problem before the solution. The most useful requests explain what you were trying to do with your agent or your project, not just the control you want added.
+
+        Check the [roadmap](https://github.com/ethanplusai/caddi/blob/main/docs/ROADMAP.md) first. Large changes are best agreed in an issue before any code is written.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what makes it hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like to happen
+      description: Describe the behaviour you want. Be concrete.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried or considered
+      description: Workarounds you are using now, and why they are not enough.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Caddi?
+      options:
+        - Workspaces and private windows
+        - Tabs, sidebar and command palette
+        - Connecting and approving agents
+        - What agents can see and do (MCP tools)
+        - Annotate and Live
+        - The Board
+        - Vault (saved logins)
+        - Privacy controls and permissions
+        - Install, updates and packaging
+        - Something else
+    validations:
+      required: true

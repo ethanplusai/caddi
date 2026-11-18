@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Caddi</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/annotate.css">
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="caddi-mark-shape" viewBox="0 0 96 96">
+      <path d="M39.6 55.3L36.2 38.8C35.6 35.6 34.2 34.9 31 35.1L15.5 36.3C11.3 36.6 8.2 34.2 9.2 30.1L14.8 19.2C16.9 15.7 19.5 15.7 22.9 17L37.3 23.5C41.7 25.5 43.4 28 44.4 32.2L48.6 55.8Z"/>
+      <path d="M53.2 55.8L56.4 39.2C57.2 35.1 55.7 32.6 55.2 28.9C53.9 21 56.2 14.8 63 10.3C71.2 4.8 81.8 5.4 87.4 11.8C92.9 18.1 90.2 24 83.4 28.2C77.7 31.8 69.1 33.7 65.5 36.5C62.8 38.6 62.1 42.3 61.4 46.2L59.8 55.1Z"/>
+      <path d="M37 46L37.7 49.2C30.9 51 30 53.4 34.2 55.3C41.2 58.4 62.8 58.9 68.8 55.4C73 53 68.5 50.7 63.3 49.3L64 46C71.7 47.9 76.3 51 77.1 55.8L79.5 76.7C80.3 83.6 74.8 86.7 62.9 88C49.3 89.6 34.1 88.3 27 85.3C22.4 83.4 21.8 80.6 22.5 75.7L25 55.4C25.6 51 29.6 48 37 46Z"/>
+    </symbol>
+  </svg>
+
+  <div id="shell">
+
+    <!-- Sidebar ─────────────────────────────────────────────── -->
+    <aside id="sidebar" aria-label="Workspaces and tabs">
+      <!-- Workspace rail: every workspace one click away -->
+      <nav id="workspace-rail" class="workspace-rail" aria-label="Workspaces" hidden>
+        <div id="workspace-rail-list" class="workspace-rail-list"></div>
+        <button id="workspace-rail-add" type="button" class="workspace-rail-add" aria-label="New workspace" title="New workspace" data-icon="plus"></button>
+      </nav>
+      <header class="brand">
+        <span class="caddi-logo sr-only"><img src="/brand/caddi-mark.svg" alt="" width="16" height="16">Caddi</span>
+        <button id="sidebar-close" class="icon" aria-label="Close workspaces and tabs" data-icon="close"></button>
+      </header>
+
+      <div id="normal-workspace-controls" class="workspace-switcher-wrap">
+        <button id="workspace-switcher" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="workspace-popover">
+          <span id="workspace-badge" class="workspace-badge" aria-hidden="true"></span>
+          <span class="workspace-switcher-copy">
+            <strong id="workspace-title">No workspace</strong>
+            <small id="workspace-kind">Choose a workspace</small>
+          </span>
+          <span class="workspace-switcher-chevron" aria-hidden="true" data-icon="updown"></span>
+        </button>
+        <div id="workspace-popover" hidden>
+          <p class="popover-label">Workspaces</p>
+          <nav id="workspace-list" aria-label="Choose workspace"></nav>
+          <div class="workspace-popover-actions">
+            <button id="add-workspace" type="button">
+              <span aria-hidden="true" data-icon="plus"></span>
+              <span>New workspace</span>
+            </button>
+            <button id="open-workspace-window" type="button" data-shortcut-title="Open workspace in new window" data-shortcut-command="new-window">
+              <span aria-hidden="true" data-icon="window"></span>
+              <span>Open in new window</span>
+            </button>
+            <button id="open-private-window" type="button" data-shortcut-title="New private window" data-shortcut-command="private-window">
+              <span aria-hidden="true" data-icon="shield"></span>
+              <span>New private window</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button id="sidebar-command" type="button" class="sidebar-command" aria-label="Search tabs and commands" data-shortcut-title="Search tabs and commands" data-shortcut-command="k">
+        <span aria-hidden="true" data-icon="search"></span>
+        <span id="sidebar-search-label">Search tabs</span>
+        <kbd data-shortcut-label="k"></kbd>
+      </button>
+
+      <div class="sidebar-scroll">
+        <button id="board-entry" type="button" class="board-entry" aria-pressed="false" hidden><span aria-hidden="true" data-icon="note"></span><span>Board</span><span id="board-entry-count" class="board-entry-count"></span></button>
+
+        <section id="favorites-section">
+          <h2 class="sidebar-section-title">Favorites</h2>
+          <nav id="favorite-list" aria-label="Favorite tabs"></nav>
+        </section>
+
+        <section id="pinned-section">
+          <h2 class="sidebar-section-title">Pinned</h2>
+          <nav id="pinned-list" aria-label="Pinned tabs"></nav>
+        </section>
+
+        <div class="group-switcher">
+          <button id="group-trigger" type="button" aria-label="Choose tab group" aria-haspopup="true" aria-expanded="false" aria-controls="group-popover">
+            <span id="group-title">Tabs</span>
+            <span aria-hidden="true" data-icon="down"></span>
+          </button>
+          <button id="edit-group" class="icon small-icon" title="Edit tab group" aria-label="Edit tab group" data-icon="more"></button>
+          <button id="new-folder" class="icon small-icon" title="New folder" aria-label="New folder" data-icon="folder-plus"></button>
+          <button id="new-group" class="icon small-icon" title="New tab group" aria-label="New tab group" data-icon="plus"></button>
+          <div id="group-popover" hidden>
+            <nav id="group-list" aria-label="Choose tab group"></nav>
+          </div>
+          <select id="group-select" class="sr-only" tabindex="-1" aria-hidden="true"></select>
+        </div>
+
+        <nav id="tab-list" aria-label="Tabs and folders"></nav>
+
+        <button id="undo-folder-removal" type="button" class="subtle organization-undo" hidden>Undo folder removal</button>
+
+        <button id="new-tab" class="new-tab-action" title="New tab" aria-label="New tab" data-shortcut-title="New tab" data-shortcut-command="t">
+          <span aria-hidden="true" data-icon="plus"></span>
+          <span>New tab</span>
+        </button>
+      </div>
+
+      <div class="sidebar-bottom">
+        <button id="connect-agent" class="agent-launch" title="Agents" aria-label="Agents">
+          <span class="agent-launch-icon" aria-hidden="true" data-icon="agents"></span>
+          <span id="agent-presence" class="agent-presence" aria-hidden="true"></span>
+          <span id="workspace-status" class="agent-launch-status"></span>
+          <span id="attention-count" class="agent-attention-count" aria-hidden="true" hidden></span>
+          <span id="agent-launch-title" class="agent-launch-action">Connect</span>
+        </button>
+
+        <div class="utility-row">
+          <button id="show-history" class="history-launch" title="History" aria-label="History" aria-expanded="false" aria-controls="history-panel" data-shortcut-title="History" data-shortcut-command="history">
+            <span aria-hidden="true" data-icon="history"></span>
+          </button>
+          <button id="show-downloads" class="history-launch" title="Downloads" aria-label="Downloads" aria-expanded="false" aria-controls="downloads-panel" data-shortcut-title="Downloads" data-shortcut-command="downloads">
+            <span aria-hidden="true" data-icon="download"></span>
+            <span id="download-count" class="download-count"></span>
+          </button>
+          <button id="about-app" class="history-launch" title="Settings" aria-label="Settings">
+            <span aria-hidden="true" data-icon="settings"></span>
+          </button>
+        </div>
+
+        <div id="agent-list" class="sr-only"></div>
+        <span id="agent-count" class="sr-only"></span>
+
+        <section id="private-window-controls" class="private-window-controls" aria-label="Private window" hidden>
+          <div class="private-window-heading">
+            <span aria-hidden="true" data-icon="shield"></span>
+            <strong>Private window</strong>
+          </div>
+          <p id="private-window-description">This window only</p>
+          <button id="open-normal-window" type="button" class="subtle">New normal window</button>
+          <button id="close-private-window" type="button" class="subtle private-window-close">Close private window</button>
+        </section>
+      </div>
+    </aside>
+
+    <!-- Main ────────────────────────────────────────────────── -->
+    <main id="main">
+      <header id="toolbar">
+        <div class="toolbar-start">
+          <button id="sidebar-toggle" class="icon" aria-label="Show workspaces and tabs" aria-controls="sidebar" aria-expanded="false" data-icon="sidebar"></button>
+          <div class="nav-buttons">
+            <button id="back" class="icon" aria-label="Back" title="Back" data-icon="back"></button>
+            <button id="forward" class="icon" aria-label="Forward" title="Forward" data-icon="forward"></button>
+            <button id="reload" class="icon" aria-label="Reload" title="Reload" data-icon="reload"></button>
+          </div>
+        </div>
+
+        <form id="address-form">
+          <span id="address-status" aria-hidden="true"></span>
+          <input id="address" aria-label="Address or search" placeholder="Search or enter an address" autocomplete="off" spellcheck="false">
+          <button id="preview-address-button" type="button" class="preview-address-button" title="Open the typed address as a preview, without adding a tab">Preview</button>
+          <button id="pin" class="icon small-icon" aria-label="Pin this tab" title="Pin this tab"></button>
+        </form>
+
+        <div class="toolbar-end">
+          <span id="private-window-badge" class="private-window-badge" role="status" hidden>
+            <span aria-hidden="true" data-icon="shield"></span>
+            <span id="private-window-status">Private window</span>
+          </span>
+          <button id="external-links" class="subtle external-links-launch" aria-label="Review links from other apps" aria-haspopup="dialog" hidden>Links <span id="external-links-count">0</span></button>
+          <div id="agent-driving" class="agent-driving" hidden>
+            <span class="agent-driving-dot" aria-hidden="true"></span>
+            <span id="agent-driving-text" role="status">An agent is driving</span>
+            <button id="agent-take-over" type="button" class="agent-take-over" aria-describedby="agent-driving-text" title="End the agent’s control of this workspace now. It keeps its access and has to ask for control again.">Take over</button>
+          </div>
+          <!-- Primary action slot: Annotate, with what was sent to agents attached to it. -->
+          <div class="annotate-group">
+            <button id="annotate" type="button" class="annotate-toggle" aria-pressed="false" title="Annotate this page (⇧⌘A)"><span>Annotate</span></button>
+            <button id="sent-button" type="button" class="sent-toggle" aria-pressed="false" aria-controls="review-panel" aria-label="Sent to agents" title="Sent to agents"><span aria-hidden="true" data-icon="note"></span><span id="sent-count" class="sent-count" aria-hidden="true" hidden></span></button>
+          </div>
+          <button id="live" type="button" class="toolbar-text-button live-toggle" aria-pressed="false" title="Talk to an agent while pointing at this page (⇧⌘L)"><span class="live-toggle-dot" aria-hidden="true"></span><span>Live</span><span id="live-toggle-time" class="live-toggle-time" hidden></span></button>
+          <!-- While Live is on, its status sits here in the toolbar so the page keeps its full width. -->
+          <span id="live-caption" class="live-caption" role="status" aria-live="polite" hidden></span>
+          <button id="live-details" type="button" class="icon live-details" aria-pressed="false" aria-controls="live-panel" aria-label="Show what you said and type an instruction" title="What you said, and typing" data-icon="note" hidden></button>
+          <button id="private" class="toolbar-text-button private-action" title="Pause agents and page capture in this workspace. Your tabs and sign-ins are not affected.">Pause agents</button>
+          <div class="toolbar-tools">
+            <button id="split" class="icon" aria-label="Toggle split view" title="Split with another tab" data-icon="split"></button>
+            <button id="command-button" class="icon" aria-label="Open commands and tab search" title="Commands and tabs" data-shortcut-title="Commands and tabs" data-shortcut-command="k" data-icon="search"></button>
+            <button id="login-fill" class="icon vault-key" aria-label="Vault" title="Vault" aria-haspopup="dialog" data-shortcut-title="Vault" data-shortcut-command="vault"><span aria-hidden="true" data-icon="key"></span><span id="vault-key-match" class="vault-key-match" aria-hidden="true" hidden></span></button>
+            <button id="site-permissions" class="icon" aria-label="Site permissions and blocked windows" title="Site permissions" data-icon="shield"></button>
+            <button id="page-tools" class="icon" aria-label="Page controls" title="Find, zoom, sound and tab options" data-icon="more"></button>
+          </div>
+        </div>
+      </header>
+
+      <section id="vault-offer" class="vault-offer banner" role="region" aria-labelledby="vault-offer-title" hidden>
+        <span class="vault-offer-symbol" aria-hidden="true" data-icon="key"></span>
+        <div class="vault-offer-copy">
+          <h2 id="vault-offer-title">Save this login to the Vault?</h2>
+          <p id="vault-offer-detail"></p>
+        </div>
+        <label id="vault-offer-scope-row" class="vault-offer-scope" hidden>Save in
+          <select id="vault-offer-scope" aria-label="Where to save this login">
+            <option value="workspace">This workspace only</option>
+            <option value="all">All workspaces</option>
+          </select>
+        </label>
+        <div class="vault-offer-actions">
+          <button id="vault-offer-never" type="button" class="subtle">Never for this site</button>
+          <button id="vault-offer-dismiss" type="button" class="subtle">Not now</button>
+          <button id="vault-offer-save" type="button" class="primary">Save</button>
+        </div>
+      </section>
+
+      <section id="system-lifecycle-bar" class="system-lifecycle-bar banner" aria-labelledby="system-lifecycle-title" aria-describedby="system-lifecycle-description" hidden>
+        <div class="system-lifecycle-copy">
+          <div class="system-lifecycle-heading">
+            <span class="system-lifecycle-symbol" aria-hidden="true" data-icon="pause"></span>
+            <h2 id="system-lifecycle-title" tabindex="-1">Caddi is paused</h2>
+          </div>
+          <p id="system-lifecycle-reason"></p>
+          <p id="system-lifecycle-description"></p>
+          <p id="system-lifecycle-status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="system-lifecycle-actions">
+          <button id="system-lifecycle-close" type="button" class="subtle">Close window</button>
+          <button id="system-lifecycle-retry" type="button" class="primary" hidden>Retry stop</button>
+          <button id="system-lifecycle-continue" type="button" class="primary" disabled>Continue</button>
+        </div>
+      </section>
+      <p id="system-lifecycle-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+      <section id="media-activity-strip" class="media-activity-strip banner" aria-label="Possible website media activity" hidden>
+        <span id="media-activity-summary" role="status"></span>
+        <div class="media-activity-review">
+          <select id="media-activity-workspace" aria-label="Workspace with possible camera or microphone activity"></select>
+          <button id="media-review-activity" type="button" class="subtle">Review activity</button>
+        </div>
+      </section>
+
+      <section id="page-preview-bar" class="page-preview-bar banner" aria-labelledby="page-preview-label" hidden>
+        <div class="page-preview-heading">
+          <span id="page-preview-label" class="page-preview-label">Preview</span>
+          <strong id="page-preview-title">Opening preview…</strong>
+          <div class="page-preview-actions">
+            <button id="page-preview-close" type="button" class="subtle">Close preview</button>
+            <button id="page-preview-keep" type="button" class="primary">Keep as tab</button>
+          </div>
+        </div>
+        <span id="page-preview-url" class="page-preview-url" tabindex="0" aria-label="Preview address"></span>
+        <p id="page-preview-state" class="helper" role="status">Uses this workspace’s sign-ins and site storage. Keep it as a tab to save it.</p>
+      </section>
+
+      <form id="find-bar" role="search" aria-label="Find in this page" hidden>
+        <label class="sr-only" for="find-input">Find in page</label>
+        <input id="find-input" type="search" maxlength="512" autocomplete="off" spellcheck="false" placeholder="Find in page">
+        <output id="find-count" aria-live="polite"></output>
+        <label class="find-case-label" title="Match case">
+          <input id="find-case" type="checkbox">
+          <span>Aa</span>
+        </label>
+        <button type="button" id="find-previous" class="icon small-icon" aria-label="Previous match" data-icon="up"></button>
+        <button type="submit" id="find-next" class="icon small-icon" aria-label="Next match" data-icon="down"></button>
+        <button type="button" id="find-close" class="icon small-icon" aria-label="Close find" data-icon="close"></button>
+      </form>
+
+      <div id="content-row">
+        <div id="page-area">
+          <div id="page-backdrop" aria-hidden="true" hidden></div>
+          <section id="empty-window" class="newtab" hidden>
+            <div class="newtab-inner empty-state">
+              <span class="empty-state-icon" aria-hidden="true" data-icon="workspace"></span>
+              <h1>Choose a workspace</h1>
+              <p class="lede">Pick one in the sidebar. If it is already open in another window, that window comes forward.</p>
+            </div>
+          </section>
+
+          <!-- The Board: drawn here over the hidden page while it is open. -->
+          <section id="board" class="board" aria-labelledby="board-title" hidden>
+            <header class="board-bar">
+              <div class="board-heading"><h1 id="board-title">Board</h1><small id="board-summary"></small></div>
+              <div class="board-actions">
+                <button id="board-add-note" type="button" class="subtle">Add note</button>
+                <button id="board-pin-page" type="button" class="subtle" title="Add the page you were on as a link">Pin page</button>
+                <button id="board-snap-page" type="button" class="subtle" title="Add a picture of the page you were on">Snap page</button>
+                <button id="board-close" type="button" class="icon" aria-label="Close the board" title="Back to the page" data-icon="close"></button>
+              </div>
+            </header>
+            <div id="board-canvas" class="board-canvas" tabindex="0" aria-label="Board cards. Paste or drop images and links here.">
+              <p id="board-empty" class="board-empty">Paste a screenshot (⌘V), drop images or links, add a note, or pin the page you were on. Agents connected to this workspace can read everything here.</p>
+            </div>
+          </section>
+
+          <section id="newtab" class="newtab">
+            <div class="newtab-inner">
+              <div class="newtab-brand" aria-hidden="true">
+                <svg class="caddi-mark" viewBox="0 0 96 96" width="40" height="40"><use href="#caddi-mark-shape"/></svg>
+                <span class="caddi-wordmark">caddi</span>
+              </div>
+              <h1 id="newtab-title">Search or enter an address</h1>
+              <form id="newtab-form">
+                <span class="newtab-search-icon" aria-hidden="true" data-icon="search"></span>
+                <input id="newtab-address" aria-label="Search from new tab" placeholder="Search the web or enter an address" autocomplete="off">
+                <button class="primary newtab-go" aria-label="Go" title="Go" data-icon="forward"></button>
+                <button id="newtab-preview" type="button" class="preview-address-button" title="Open the typed address as a preview, without adding a tab">Preview</button>
+              </form>
+              <p class="newtab-context sr-only">New tab in <strong id="newtab-workspace"></strong></p>
+              <div id="private-newtab-note" class="private-newtab-note" hidden>
+                <p>Tabs and sign-ins stay in this temporary window. Caddi does not save its history or restore it after closing.</p>
+                <details>
+                  <summary>What stays separate?</summary>
+                  <p>Your normal workspaces and saved sign-ins are separate. Agents, service connections, notes, downloads, printing and site permissions are off in this window. Websites and your network can still see your activity.</p>
+                </details>
+              </div>
+              <div class="start-actions">
+                <button id="show-agents" class="start-card">
+                  <span class="start-card-icon" aria-hidden="true" data-icon="agents"></span>
+                  <span class="start-card-copy">
+                    <strong>Connect an agent</strong>
+                    <small>Let your coding tool see and use this workspace.</small>
+                  </span>
+                </button>
+                <button id="newtab-annotate" type="button" class="start-card">
+                  <span class="start-card-icon" aria-hidden="true" data-icon="annotate"></span>
+                  <span class="start-card-copy">
+                    <strong>Annotate a page</strong>
+                    <small>Point at what should change and tell your agent.</small>
+                  </span>
+                </button>
+                <button id="try-example" class="start-card">
+                  <span class="start-card-icon" aria-hidden="true" data-icon="window"></span>
+                  <span class="start-card-copy">
+                    <strong>Open the example page</strong>
+                    <small>A local sample page to try things on.</small>
+                  </span>
+                </button>
+              </div>
+              <nav id="newtab-favorites" aria-label="Favorite tabs" hidden></nav>
+            </div>
+          </section>
+
+          <div id="privacy-cover" hidden>
+            <span class="status-dot"></span>
+            <h2>Pausing agents…</h2>
+            <p>This page will reopen when agent input and recording have stopped.</p>
+          </div>
+          <div id="picker-hint" hidden>Click an element to describe it. Agent input is paused in this workspace. <button id="cancel-pick" class="subtle">Cancel</button></div>
+        </div>
+
+        <aside id="history-panel" class="panel" aria-label="Workspace history" hidden>
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2>History</h2>
+              <p id="history-workspace" class="eyebrow"></p>
+            </div>
+            <button id="close-history" class="icon" aria-label="Close history" data-icon="close"></button>
+          </header>
+          <form id="history-form" class="panel-search" role="search">
+            <label class="sr-only" for="history-query">Search this workspace’s history</label>
+            <input id="history-query" type="search" maxlength="256" placeholder="Search history" autocomplete="off">
+            <button class="icon small-icon" aria-label="Search history" data-icon="search"></button>
+          </form>
+          <div class="panel-body">
+            <p id="history-note" class="helper"></p>
+            <div id="history-results" aria-live="polite"></div>
+          </div>
+          <footer class="history-footer panel-footer">
+            <button id="history-clear" class="subtle">Clear history…</button>
+          </footer>
+        </aside>
+
+        <aside id="downloads-panel" class="panel" aria-label="Workspace downloads" hidden>
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2>Downloads</h2>
+              <p id="downloads-workspace" class="eyebrow"></p>
+            </div>
+            <button id="close-downloads" class="icon" aria-label="Close downloads" data-icon="close"></button>
+          </header>
+          <div class="panel-body">
+            <p id="download-history-note" class="helper" role="status">Saved files stay where you chose.</p>
+            <div id="download-results" aria-live="polite"></div>
+          </div>
+        </aside>
+
+        <aside id="review-panel" class="panel sent-panel" aria-labelledby="sent-title" hidden>
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2 id="sent-title">Sent to agents</h2>
+              <p id="sent-subtitle" class="eyebrow">What you sent from this workspace</p>
+            </div>
+            <button id="close-review" class="icon" aria-label="Close Sent to agents" data-icon="close"></button>
+          </header>
+          <div class="panel-body">
+            <div id="sent-view" class="sent-view">
+              <div id="sent-listening" class="live-listening" hidden>
+                <p id="sent-listening-text"></p>
+                <button id="sent-copy-prompt" type="button" class="subtle">Copy prompt</button>
+              </div>
+              <div id="draft-empty" class="feedback-intro empty-state">
+                <span class="empty-state-icon" aria-hidden="true" data-icon="note"></span>
+                <strong>Nothing sent yet</strong>
+                <p>Mark up a page or talk while you point, and what you send shows up here with whether the agent got it.</p>
+                <div class="selection-actions sent-start">
+                  <button id="sent-annotate" type="button" class="primary">Annotate this page</button>
+                  <button id="sent-live" type="button" class="subtle">Start Live</button>
+                </div>
+              </div>
+              <div id="draft-list" class="sent-list-wrap">
+                <ul id="sent-list" class="sent-list" aria-label="Sent to agents, newest first"></ul>
+              </div>
+            <details id="capture-tools">
+              <summary>More ways to make a note</summary>
+              <div class="selection-actions">
+                <button id="pick-element" class="subtle">Point at an element</button>
+                <button id="pick-page" class="subtle">Note on the whole page</button>
+              </div>
+              <div class="moment-capture-controls" aria-label="Screenshots to mark up">
+                <button id="moments-start" class="subtle">Add a screenshot</button>
+                <button id="moments-add" class="subtle" hidden>Add another screenshot</button>
+                <button id="moments-stop" class="primary" hidden>Done</button>
+                <button id="moments-cancel" class="subtle" hidden>Cancel</button>
+                <p id="moments-status" role="status" class="helper"></p>
+              </div>
+              <p id="selection-hint" class="helper">Agents can’t use this workspace while you point.</p>
+            </details>
+
+              <details id="feedback-history" class="saved-notes">
+                <summary>Saved notes</summary>
+                <section class="persistence-load-row" aria-label="Saved notes">
+                  <p id="feedback-persistence-note" class="helper"></p>
+                  <button id="feedback-restore" type="button" class="subtle" hidden>Load saved drafts</button>
+                  <p id="feedback-load-status" class="helper" role="status" aria-live="polite"></p>
+                </section>
+              </details>
+            </div>
+
+            <div id="draft-editor" hidden>
+              <button id="draft-back" type="button" class="subtle draft-back">Back to Sent</button>
+              <section class="evidence-review" aria-labelledby="evidence-title">
+                <div class="evidence-heading">
+                  <p id="evidence-title" class="section-label">Page</p>
+                  <span class="evidence-original">Screenshot</span>
+                </div>
+                <details class="capture-metadata">
+                  <summary>Page details</summary>
+                  <div class="context-summary">
+                    <span>Captured <strong id="target-label"></strong></span>
+                    <span>Current <strong id="current-target"></strong></span>
+                  </div>
+                </details>
+                <span id="stale-note" class="warning" hidden>The page has changed since this was captured.</span>
+                <figure id="evidence-image" hidden>
+                  <div class="moment-image-stage">
+                    <img id="evidence-preview" alt="Screenshot attached to this note">
+                    <svg id="moment-overlay" aria-label="Saved screenshot marks" preserveAspectRatio="none" hidden></svg>
+                  </div>
+                  <figcaption>Screenshot saved with this note</figcaption>
+                </figure>
+                <p id="evidence-preview-status" class="helper" role="status">No screenshot is attached to this note.</p>
+              </section>
+
+              <section id="moment-editor" aria-label="Screenshot marks" hidden>
+                <div class="moment-heading">
+                  <p class="field-label">Screenshots</p>
+                  <span class="helper">Kept on this Mac</span>
+                </div>
+                <div id="moment-strip" role="group" aria-label="Choose a screenshot"></div>
+                <select id="moment-select" hidden aria-hidden="true" tabindex="-1"></select>
+                <div class="moment-tools" role="toolbar" aria-label="Mark this screenshot">
+                  <button id="moment-rectangle" type="button" class="icon" aria-label="Draw rectangle" title="Draw rectangle" data-icon="rectangle"></button>
+                  <button id="moment-arrow" type="button" class="icon" aria-label="Draw arrow" title="Draw arrow" data-icon="arrow"></button>
+                  <label class="sr-only" for="moment-color">Mark color</label>
+                  <select id="moment-color" aria-label="Mark color">
+                    <option value="teal">Teal</option>
+                    <option value="coral">Coral</option>
+                    <option value="gold">Gold</option>
+                  </select>
+                  <span class="moment-tools-spacer"></span>
+                  <button id="moment-undo" type="button" class="icon" aria-label="Undo last mark" title="Undo last mark" data-icon="undo"></button>
+                  <button id="moment-clear" type="button" class="icon" aria-label="Clear marks" title="Clear marks" data-icon="clear"></button>
+                </div>
+                <details id="moment-note-details" class="moment-note-details">
+                  <summary>Note for this screenshot <span id="moment-edit-status" class="helper" role="status"></span></summary>
+                  <label class="sr-only" for="moment-note">Note for this screenshot</label>
+                  <textarea id="moment-note" rows="2" maxlength="2000"></textarea>
+                  <div class="moment-note-actions">
+                    <button id="moment-save-note" type="button" class="subtle">Save note</button>
+                  </div>
+                </details>
+              </section>
+
+              <div class="field">
+                <label class="field-label" for="feedback-text">What should change?</label>
+                <textarea id="feedback-text" rows="4" maxlength="16000" placeholder="Describe the change you’d like…"></textarea>
+                <p id="draft-save-status" class="helper" role="status"></p>
+              </div>
+              <div id="recipient-field" class="field">
+                <label class="field-label" for="recipient">Send to</label>
+                <select id="recipient" aria-label="Agent to send this to"></select>
+              </div>
+              <label id="stale-confirm-label" class="check-label" hidden>
+                <input type="checkbox" id="stale-confirm">
+                <span>Send it with the earlier page capture</span>
+              </label>
+              <div class="send-actions">
+                <button id="save-draft" class="subtle">Save changes</button>
+                <button id="send-feedback" class="primary">Send</button>
+              </div>
+              <div class="voice-row">
+                <button id="record" class="subtle">Record a voice note</button>
+                <span id="voice-status"></span>
+              </div>
+              <p id="speech-note" class="helper"></p>
+
+              <section id="prepared-evidence" class="prepared-evidence" aria-label="Marked copies" hidden>
+                <div class="prepared-heading">
+                  <div>
+                    <strong>Marked copies</strong>
+                    <p class="helper">Preview your marks on this Mac.</p>
+                  </div>
+                  <button id="prepare-evidence" type="button" class="subtle">Prepare</button>
+                </div>
+                <p id="prepared-status" class="helper" role="status">Prepare this saved draft to compare marked images.</p>
+                <div id="prepared-results" hidden>
+                  <figure>
+                    <img id="prepared-frame" alt="Marked version of the selected screenshot">
+                    <figcaption>Full-size marked copy. The original is shown above.</figcaption>
+                  </figure>
+                  <details id="prepared-contact-details">
+                    <summary>All screenshots at a glance</summary>
+                    <img id="prepared-contact" alt="Small overview of every marked screenshot">
+                  </details>
+                  <details class="summary-details">
+                    <summary>Text summary</summary>
+                    <pre id="prepared-summary"></pre>
+                  </details>
+                  <p class="helper">Prepared on this Mac. Marked screenshots can’t be sent to an agent yet.</p>
+                </div>
+              </section>
+
+              <p id="moment-send-note" class="helper" hidden>Screenshot notes stay on this Mac. They can’t be sent to an agent yet.</p>
+              <p id="feedback-storage-note" class="helper">Notes stay in this app session.</p>
+              <details id="evidence-details" class="evidence-details">
+                <summary>Attachments <span id="attachment-count"></span></summary>
+                <p><span id="evidence-revision"></span> · <span id="target-origin"></span></p>
+                <p id="current-target-note"></p>
+                <ul id="artifact-list" aria-label="Attached files"></ul>
+              </details>
+            </div>
+
+          </div>
+        </aside>
+
+        <aside id="live-panel" class="panel live-panel" aria-labelledby="live-title" hidden>
+          <header class="panel-header">
+            <div class="panel-heading">
+              <h2 id="live-title"><span class="live-dot" aria-hidden="true"></span><span>Live</span> <span id="live-elapsed" class="live-elapsed" aria-label="Time on">0:00</span></h2>
+              <p id="live-agent" class="eyebrow"></p>
+            </div>
+            <button id="live-stop" type="button" class="subtle">Stop</button>
+          </header>
+          <div class="panel-body">
+            <p id="live-voice" class="helper" role="status"></p>
+            <div id="live-listening" class="live-listening" hidden>
+              <p>The agent isn’t listening yet. Copy the prompt and paste it into the agent.</p>
+              <button id="live-copy-prompt" type="button" class="subtle">Copy prompt</button>
+            </div>
+            <p id="live-notice" class="helper" role="status" aria-live="polite"></p>
+            <p id="live-empty" class="helper">Point at the page and say what to change. Each sentence goes to the agent with what you pointed at.</p>
+            <ol id="live-list" class="live-list" aria-label="Instructions"></ol>
+          </div>
+          <form id="live-form" class="panel-footer live-form">
+            <label class="sr-only" for="live-text">Type an instruction</label>
+            <input id="live-text" maxlength="2000" autocomplete="off" spellcheck="true" placeholder="Type an instruction">
+            <button class="primary">Send</button>
+          </form>
+        </aside>
+      </div>
+
+      <div id="statusbar" class="sr-only" aria-live="polite">
+        <span id="page-status">Ready</span>
+        <button id="zoom-status" title="Reset page zoom" aria-label="Reset page zoom" hidden>100%</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Dialogs ───────────────────────────────────────────────── -->
+  <dialog id="workspace-dialog" closedby="any" class="dialog-small" aria-labelledby="workspace-dialog-title">
+    <form id="workspace-form" class="dialog-form">
+      <header class="dialog-header">
+        <h2 id="workspace-dialog-title">New workspace</h2>
+      </header>
+      <div class="dialog-body">
+        <div class="field">
+          <label for="workspace-name">Name</label>
+          <input id="workspace-name" maxlength="120" required placeholder="Website redesign">
+        </div>
+        <div class="field">
+          <label for="workspace-create-kind">Type</label>
+          <select id="workspace-create-kind">
+            <option value="project">Project · agents can ask for access</option>
+            <option value="personal">Personal · only you</option>
+          </select>
+        </div>
+      </div>
+      <footer class="dialog-actions dialog-footer">
+        <button type="button" id="cancel-workspace" class="subtle">Cancel</button>
+        <button class="primary">Create workspace</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="welcome-dialog" class="welcome" aria-label="Welcome to Caddi">
+    <div class="welcome-body">
+      <section data-welcome-step="welcome">
+        <img class="welcome-icon" src="/brand/caddi-icon.svg" alt="" width="84" height="84">
+        <h2 tabindex="-1">Welcome to Caddi</h2>
+        <p class="welcome-lede">The Caddie for your coding agents.</p>
+        <p>Keep every project in its own workspace, let agents in only where you approve, and point at exactly what should change.</p>
+        <div class="welcome-source">
+          <div>
+            <strong>Open source, MIT licensed</strong>
+            <span>Read every line, change anything, and star the project if it is useful to you.</span>
+          </div>
+          <button id="welcome-star" type="button" class="subtle"><span aria-hidden="true" data-icon="star"></span>Star on GitHub</button>
+        </div>
+        <p id="welcome-star-status" class="helper" role="status" aria-live="polite"></p>
+      </section>
+      <section data-welcome-step="workspace" hidden>
+        <p class="welcome-eyebrow">Workspaces</p>
+        <h2 tabindex="-1">Name your first workspace</h2>
+        <p>A workspace is a separate browser profile for one project, with its own tabs, sign-ins and history. An agent only ever sees the workspace you share with it.</p>
+        <label class="welcome-field" for="welcome-workspace-name">Workspace name
+          <input id="welcome-workspace-name" type="text" maxlength="60" autocomplete="off" spellcheck="false">
+        </label>
+        <p id="welcome-workspace-status" class="helper" role="status" aria-live="polite"></p>
+        <p class="helper">Keep the name as it is if you like. Add more workspaces from the rail on the left at any time.</p>
+      </section>
+      <section data-welcome-step="agent" hidden>
+        <p class="welcome-eyebrow">Agents</p>
+        <h2 tabindex="-1">Connect your coding agent</h2>
+        <p>Caddi found these coding tools on this Mac. Connecting adds Caddi to that tool’s settings. Nothing can see a page until you approve it on screen.</p>
+        <div id="welcome-agent-panel" hidden>
+          <ul id="welcome-agent-tools" class="agent-tools" aria-label="Coding tools on this Mac"></ul>
+        </div>
+        <p id="welcome-agent-empty" class="helper" hidden></p>
+        <p id="welcome-agent-status" class="helper" role="status" aria-live="polite"></p>
+      </section>
+      <section data-welcome-step="ready" hidden>
+        <p class="welcome-eyebrow">Annotate</p>
+        <h2 tabindex="-1">Point at what should change</h2>
+        <p>Open any page, turn on Annotate, click the thing and write a note. Your agent gets the element, where it lives in the code, and your words. The count next to Annotate shows what you sent and whether the agent received it.</p>
+        <ul class="welcome-keys">
+          <li><kbd id="welcome-key-annotate"></kbd><span>Annotate the current page</span></li>
+          <li><kbd id="welcome-key-palette"></kbd><span>Search tabs and run any command</span></li>
+        </ul>
+        <p class="helper">This tour is under Help, Welcome to Caddi, whenever you want it again.</p>
+      </section>
+    </div>
+    <footer class="welcome-footer">
+      <button id="welcome-skip" type="button" class="subtle">Skip</button>
+      <span class="welcome-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span id="welcome-progress" class="sr-only" role="status" aria-live="polite"></span>
+      <span class="welcome-actions">
+        <button id="welcome-back" type="button" class="subtle" hidden>Back</button>
+        <button id="welcome-next" type="button" class="primary">Get started</button>
+      </span>
+    </footer>
+  </dialog>
+
+  <dialog id="about-dialog" closedby="any" class="dialog-wide" aria-labelledby="about-title">
+    <header class="dialog-header">
+      <h2 id="about-title">Settings</h2>
+      <button id="close-about" class="icon" aria-label="Close settings" data-icon="close"></button>
+    </header>
+    <div class="settings-layout">
+      <nav class="settings-navigation" aria-label="Settings sections">
+        <button type="button" data-settings-section="general" aria-current="page">General</button>
+        <button type="button" data-settings-section="browsing">Browsing</button>
+        <button type="button" data-settings-section="data">Data and privacy</button>
+        <button type="button" data-settings-section="about">About</button>
+      </nav>
+      <div class="settings-content">
+        <section id="settings-general">
+          <h3>General</h3>
+          <div class="setting-group">
+            <fieldset id="appearance-choice">
+              <legend>Appearance</legend>
+              <div class="segmented">
+                <label><input type="radio" name="appearance" value="system" checked><span>System</span></label>
+                <label><input type="radio" name="appearance" value="light"><span>Light</span></label>
+                <label><input type="radio" name="appearance" value="dark"><span>Dark</span></label>
+              </div>
+            </fieldset>
+            <p class="helper">System follows your Mac. Transparency and contrast follow your accessibility settings.</p>
+          </div>
+          <div class="settings-actions">
+            <button id="open-shortcuts" type="button" class="setting-link">
+              <span>Keyboard shortcuts</span>
+              <span aria-hidden="true" data-icon="chevron"></span>
+            </button>
+          </div>
+        </section>
+
+        <section id="settings-browsing" hidden>
+          <h3>Browsing</h3>
+          <section id="default-browser-settings" class="persistence-settings setting-group" aria-labelledby="default-browser-title">
+            <h4 id="default-browser-title">Default browser</h4>
+            <p id="default-browser-status" class="helper" role="status" aria-live="polite">Check which browser opens web links from other apps.</p>
+            <div class="actions">
+              <button id="default-browser-request" type="button" class="subtle" disabled>Make Caddi the default browser</button>
+              <button id="default-browser-refresh" type="button" class="subtle" disabled>Check again</button>
+            </div>
+            <p class="helper">You choose a workspace for each link that arrives from another app.</p>
+          </section>
+          <div class="settings-actions">
+            <button id="about-normal-window" type="button" class="setting-link">
+              <span>New window</span>
+              <span aria-hidden="true" data-icon="external"></span>
+            </button>
+            <button id="about-private-window" type="button" class="setting-link" data-shortcut-title="New private window" data-shortcut-command="private-window">
+              <span>New private window</span>
+              <span aria-hidden="true" data-icon="external"></span>
+            </button>
+          </div>
+        </section>
+
+        <section id="settings-data" hidden>
+          <h3>Data and privacy</h3>
+          <div class="settings-actions">
+            <button id="open-portability" type="button" class="setting-link">
+              <span>Import and export</span>
+              <span aria-hidden="true" data-icon="chevron"></span>
+            </button>
+            <button id="open-storage" type="button" class="setting-link">
+              <span>Workspace storage</span>
+              <span aria-hidden="true" data-icon="chevron"></span>
+            </button>
+            <button id="open-logins" type="button" class="setting-link">
+              <span>Vault</span>
+              <span aria-hidden="true" data-icon="chevron"></span>
+            </button>
+          </div>
+          <section id="persistence-settings" class="persistence-settings setting-group" aria-labelledby="persistence-title">
+            <h4 id="persistence-title">Saved notes and connections</h4>
+            <p id="persistence-description" class="helper"></p>
+            <button id="persistence-open" type="button" class="subtle" hidden>Open protected storage</button>
+            <p id="persistence-action-status" class="helper" role="status" aria-live="polite"></p>
+          </section>
+        </section>
+
+        <section id="settings-about" hidden>
+          <div class="settings-app-mark">
+            <svg class="caddi-mark" viewBox="0 0 96 96" width="44" height="44" aria-hidden="true"><use href="#caddi-mark-shape"/></svg>
+            <div>
+              <h3>Caddi</h3>
+              <p class="helper">The caddie for your coding agents. Development build.</p>
+            </div>
+          </div>
+          <p id="about-session-note">Caddi keeps site sign-ins in each workspace profile. Agent connections and notes last only for this app session.</p>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="shortcuts-dialog" closedby="any" class="dialog-wide" aria-labelledby="shortcuts-title" aria-describedby="shortcut-instructions">
+    <form id="shortcuts-form" class="dialog-form">
+      <header class="dialog-header">
+        <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+        <button id="close-shortcuts" type="button" class="icon" aria-label="Close keyboard shortcuts" data-icon="close"></button>
+      </header>
+      <div class="dialog-body">
+        <p id="shortcut-instructions" class="helper">Choose a shortcut, then press the keys you want. Escape cancels. Editing and system shortcuts cannot be reassigned. Changes apply when you save.</p>
+        <div id="shortcut-fields"></div>
+        <p id="shortcut-status" class="helper" role="status"></p>
+      </div>
+      <footer class="shortcut-footer dialog-footer">
+        <button id="reset-shortcuts" type="button" class="subtle">Reset to defaults</button>
+        <button id="reload-shortcuts" type="button" class="subtle" hidden>Reload current</button>
+        <div class="dialog-actions">
+          <button id="cancel-shortcuts" type="button" class="subtle">Done</button>
+          <button id="save-shortcuts" type="submit" class="primary">Save shortcuts</button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="agents-dialog" closedby="any" class="dialog-wide" aria-labelledby="agents-title" aria-describedby="agents-summary">
+    <header class="dialog-header">
+      <div>
+        <h2 id="agents-title">Agents</h2>
+        <p id="agents-summary" class="sr-only">Set up a coding tool, review agent requests, and manage service connections.</p>
+      </div>
+      <button id="close-agents" class="icon" aria-label="Close agents" data-icon="close"></button>
+    </header>
+    <nav class="agents-nav segmented" aria-label="Agent sections">
+      <button type="button" data-agents-section="setup" aria-current="page">Set up</button>
+      <button type="button" data-agents-section="agents">Agents <span id="pending-count"></span></button>
+      <button type="button" data-agents-section="services">Services</button>
+    </nav>
+    <div class="agents-scroll dialog-body">
+      <section id="agents-setup" class="agents-section" aria-labelledby="agents-setup-title">
+        <h3 id="agents-setup-title">Connect your coding tool</h3>
+        <div id="agent-tools-panel" hidden>
+          <p class="helper">Caddi found these on your Mac. Connect adds Caddi to the tool's settings. Nothing is shared until that tool asks and you approve it here.</p>
+          <ul id="agent-tools" class="agent-tools" aria-label="Coding tools on this Mac"></ul>
+          <p id="agent-tools-status" class="helper" role="status" aria-live="polite"></p>
+          <h4 id="agent-manual-title">Another tool</h4>
+        </div>
+        <p id="agents-description" class="helper">Copy this configuration into your coding tool.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <p id="agent-setup-status" class="status-chip" role="status" aria-live="polite"></p>
+            <button id="copy-config" class="subtle" disabled>Copy configuration</button>
+          </div>
+          <pre id="mcp-config"></pre>
+        </div>
+        <p id="agent-setup-approval" class="helper">Compare the code in your coding tool and Caddi before approving this agent session. After a Caddi restart, approve again and choose its workspace and site access.</p>
+      </section>
+
+      <section id="agents-agents" class="agents-section" aria-labelledby="agents-list-title" hidden>
+        <h3 id="agents-list-title">Requests and connected agents</h3>
+        <p class="helper">Check the code shown in your coding tool before you approve a request.</p>
+        <section id="attention-panel" aria-labelledby="attention-title" hidden>
+          <h4 id="attention-title">Needs your attention</h4>
+          <div id="attention-requests"></div>
+        </section>
+        <section id="admission-panel" aria-labelledby="admission-title" hidden>
+          <h4 id="admission-title">Agent activity</h4>
+          <p id="admission-status" class="helper" role="status"></p>
+          <div id="admission-jobs"></div>
+        </section>
+        <div id="pending-connections"></div>
+        <div id="connections-list"></div>
+        <p id="agents-empty" class="empty-note">No agents are connected yet. Start with Set up.</p>
+      </section>
+
+      <section id="agents-services" class="agents-section" aria-labelledby="services-title" hidden>
+        <h3 id="services-title">Services</h3>
+        <p id="services-status" class="helper" role="status"></p>
+        <div class="persistence-load-row">
+          <p id="connections-persistence-note" class="helper"></p>
+          <button id="connections-load" type="button" class="subtle" hidden>Load saved connections</button>
+        </div>
+        <form id="service-create-form" class="connection-card">
+          <h4 class="card-title">Add a read-only connection</h4>
+          <label>Service
+            <select name="provider" id="service-create-provider">
+              <option value="github">GitHub</option>
+              <option value="vercel">Vercel</option>
+              <option value="resend">Resend</option>
+            </select>
+          </label>
+          <label>Connection name
+            <input name="label" maxlength="120" required placeholder="Project connection">
+          </label>
+          <div data-service-provider-fields="github">
+            <label>GitHub owner
+              <input name="owner" maxlength="39" required placeholder="owner">
+            </label>
+            <label>Repository
+              <input name="repository" maxlength="100" required placeholder="repository">
+            </label>
+          </div>
+          <div data-service-provider-fields="vercel" hidden>
+            <label>Vercel team ID
+              <input name="teamId" maxlength="128" required disabled placeholder="team_…">
+            </label>
+            <label>Project ID
+              <input name="projectId" maxlength="128" required disabled placeholder="prj_…">
+            </label>
+            <p class="helper">Read access is limited to this team and project.</p>
+          </div>
+          <p data-service-provider-fields="resend" class="helper" hidden>Reads domain details for the connected Resend account.</p>
+          <p id="service-create-scope" class="helper"></p>
+          <div id="service-create-operations"></div>
+          <div class="actions">
+            <button id="create-service" class="primary">Add connection</button>
+          </div>
+        </form>
+        <section id="connection-acquisition-review" class="connection-card" aria-labelledby="connection-acquisition-title" hidden>
+          <h4 id="connection-acquisition-title" class="card-title">Review this connection</h4>
+          <p id="connection-acquisition-description" class="helper"></p>
+          <div class="actions">
+            <button id="connection-acquire-cancel" type="button" class="subtle">Cancel</button>
+            <button id="connection-acquire-confirm" type="button" class="primary" disabled>Continue to enter the key</button>
+          </div>
+        </section>
+        <p id="connection-acquisition-status" class="helper" role="status" aria-live="polite"></p>
+        <div id="services-list"></div>
+        <details class="qualification-details">
+          <summary>About service connections</summary>
+          <p id="protected-keys-status" class="helper" title="Secure key storage needs a signed release build">Secure key storage unavailable</p>
+          <p id="connection-qualification-note" class="helper">Real account keys need a signed release build. Access you give an agent ends with its session.</p>
+        </details>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="organize-dialog" closedby="any" class="dialog-small" aria-labelledby="organize-title">
+    <header class="dialog-header">
+      <div>
+        <h2 id="organize-title">Organize</h2>
+        <p id="organize-eyebrow" class="eyebrow">Organize</p>
+      </div>
+      <button id="close-organize" class="icon" aria-label="Close organization controls" data-icon="close"></button>
+    </header>
+    <form id="organize-form" class="dialog-form">
+      <div class="dialog-body">
+        <div id="organize-fields"></div>
+        <div id="organize-order" class="organize-order" hidden></div>
+        <div id="organize-secondary" class="organize-secondary"></div>
+        <p id="organize-error" class="form-error" role="alert" hidden></p>
+      </div>
+      <footer class="dialog-actions dialog-footer">
+        <button type="button" id="cancel-organize" class="subtle">Cancel</button>
+        <button id="save-organize" class="primary">Save</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="page-dialog" closedby="any" aria-labelledby="page-dialog-title">
+    <header class="dialog-header">
+      <h2 id="page-dialog-title">Page</h2>
+      <button id="close-page" class="icon small-icon" aria-label="Close page controls" data-icon="close"></button>
+    </header>
+    <div class="page-zoom">
+      <span>Zoom</span>
+      <div class="stepper">
+        <button id="zoom-out" class="icon small-icon" aria-label="Zoom out" data-icon="minus"></button>
+        <button id="zoom-reset" class="stepper-value" aria-label="Reset zoom">100%</button>
+        <button id="zoom-in" class="icon small-icon" aria-label="Zoom in" data-icon="plus"></button>
+      </div>
+    </div>
+    <div class="page-menu">
+      <button id="page-find">Find in page <kbd data-shortcut-label="f"></kbd></button>
+      <button id="page-split">Toggle split view</button>
+      <button id="page-mute">Mute tab</button>
+      <button id="page-print">Print… <kbd data-shortcut-label="print"></kbd></button>
+      <button id="page-save-pdf">Save as PDF…</button>
+      <button id="page-copy-markdown" title="Copy the main content of this page as Markdown. Form entries and protected fields are left out.">Copy page as Markdown</button>
+      <button id="page-edit-tab">Rename or move tab</button>
+      <button id="page-duplicate">Duplicate tab</button>
+    </div>
+    <p id="page-print-status" class="helper" role="status"></p>
+  </dialog>
+
+  <dialog id="confirm-history-dialog" closedby="any" class="dialog-small" aria-labelledby="confirm-history-title">
+    <header class="dialog-header">
+      <h2 id="confirm-history-title">Clear this workspace’s history?</h2>
+    </header>
+    <div class="dialog-body">
+      <p id="confirm-history-copy" class="helper"></p>
+    </div>
+    <footer class="dialog-actions dialog-footer">
+      <button id="cancel-clear-history" class="subtle">Cancel</button>
+      <button id="confirm-clear-history" class="primary danger">Clear history</button>
+    </footer>
+  </dialog>
+
+  <dialog id="command-dialog" closedby="any" aria-labelledby="command-title">
+    <div class="command-search-row">
+      <h2 id="command-title" class="sr-only">Commands, tabs and workspaces</h2>
+      <label class="sr-only" for="command-query">Search commands, tabs, and workspaces</label>
+      <span aria-hidden="true" id="command-search-icon" data-icon="search"></span>
+      <input id="command-query" type="search" maxlength="128" placeholder="Search commands, tabs, and workspaces" autocomplete="off" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="command-results">
+      <button id="close-command" class="icon small-icon" aria-label="Close commands" data-icon="close"></button>
+    </div>
+    <div id="command-results" role="listbox" aria-label="Commands and results"></div>
+    <p id="command-result-count" class="sr-only" role="status" aria-live="polite"></p>
+    <p class="command-hint">
+      <span><kbd>↑</kbd><kbd>↓</kbd> Select</span>
+      <span><kbd>↵</kbd> Open</span>
+      <span><kbd>esc</kbd> Close</span>
+    </p>
+  </dialog>
+
+  <dialog id="permissions-dialog" closedby="any" class="dialog-medium" aria-labelledby="permissions-title">
+    <header class="dialog-header">
+      <h2 id="permissions-title">Site permissions</h2>
+      <button id="close-permissions" class="icon" aria-label="Close site permissions" data-icon="close"></button>
+    </header>
+    <div class="dialog-body">
+      <p class="helper">Check which site is asking, and for what, before you allow it.</p>
+      <div id="permission-pending" aria-live="polite"></div>
+      <section aria-labelledby="media-title">
+        <h3 id="media-title" tabindex="-1">Camera and microphone</h3>
+        <p id="media-availability" class="helper"></p>
+        <div id="media-records"></div>
+        <p class="helper">Revoking blocks new requests. It may not stop a stream that is already running. “End page activity” closes that page, after asking about unsaved work.</p>
+        <p id="media-action-status" class="helper" role="status" aria-live="polite"></p>
+      </section>
+      <section>
+        <h3>Pop-up windows</h3>
+        <p class="helper">Allow one pop-up, then try again on the page within 30 seconds. Blocked form submissions are not retried for you.</p>
+        <div id="popup-controls"></div>
+        <div id="popup-grants" aria-live="polite"></div>
+        <div id="popup-children"></div>
+      </section>
+      <section aria-labelledby="site-logins-title">
+        <h3 id="site-logins-title">Vault</h3>
+        <p id="site-logins-summary" class="helper"></p>
+        <button id="open-site-logins" type="button" class="subtle">Open the Vault</button>
+      </section>
+      <section>
+        <h3>Recent activity</h3>
+        <div id="permission-activity"></div>
+      </section>
+      <details class="permission-limits">
+        <summary>What is supported?</summary>
+        <p class="helper">This development build can ask you about notifications, camera and microphone. Screen sharing and other site permissions are not available yet. Video-call sites have not been fully tested.</p>
+      </details>
+    </div>
+  </dialog>
+
+  <dialog id="external-links-dialog" closedby="any" class="dialog-medium" aria-labelledby="external-links-title" aria-describedby="external-links-description">
+    <header class="dialog-header">
+      <h2 id="external-links-title">Links from other apps</h2>
+      <button id="close-external-links" class="icon" aria-label="Close link review" data-icon="close"></button>
+    </header>
+    <div class="dialog-body">
+      <p id="external-links-description" class="helper">Choose where each link opens. Agents pause in that workspace until you resume them. Waiting links expire after ten minutes.</p>
+      <p id="external-links-status" class="helper" role="status"></p>
+      <div id="external-links-list"></div>
+    </div>
+    <footer class="dialog-actions dialog-footer">
+      <button id="refresh-external-links" class="subtle">Refresh</button>
+    </footer>
+  </dialog>
+
+  <dialog id="logins-dialog" closedby="any" class="dialog-medium" aria-labelledby="logins-title" aria-describedby="logins-description">
+    <header class="dialog-header">
+      <div>
+        <h2 id="logins-title">Vault</h2>
+        <p id="logins-workspace" class="eyebrow"></p>
+      </div>
+      <button id="close-logins" type="button" class="icon" aria-label="Close the Vault" data-icon="close"></button>
+    </header>
+    <div class="dialog-body">
+      <p id="logins-description" class="helper">Passwords stay in this Mac’s login keychain, never in Caddi’s files. Agents you allow can sign in with them without ever seeing them. Caddi has no account, and nothing syncs to other devices.</p>
+      <p id="logins-status" class="helper" role="status" aria-live="polite"></p>
+      <div class="vault-tabs" role="tablist" aria-label="Vault">
+        <button id="vault-tab-logins" type="button" role="tab" aria-selected="true" aria-controls="vault-logins-panel">Logins</button>
+        <button id="vault-tab-activity" type="button" role="tab" aria-selected="false" aria-controls="vault-activity-panel">Activity</button>
+      </div>
+      <div id="vault-logins-panel" role="tabpanel" aria-labelledby="vault-tab-logins">
+        <label class="vault-search"><span class="sr-only">Search logins</span><input id="vault-search" type="search" placeholder="Search sites and usernames" autocomplete="off" spellcheck="false"></label>
+        <section id="vault-this-page" class="vault-this-page" aria-labelledby="vault-this-page-title" hidden>
+          <h3 id="vault-this-page-title">This page</h3>
+          <div id="vault-this-page-list" class="login-fill-list"></div>
+        </section>
+        <div id="logins-list" class="vault-sites" aria-label="Logins in this workspace"></div>
+        <p id="logins-empty" class="helper" hidden>No logins in this workspace’s Vault yet. Add one, import from another password manager, or sign in to a site and Caddi offers to save it.</p>
+        <section id="vault-import" class="vault-import" aria-labelledby="vault-import-title" hidden>
+          <h3 id="vault-import-title">Review import</h3>
+          <p id="vault-import-summary" class="helper"></p>
+          <label>Import into<select id="vault-import-workspace"></select></label>
+          <ul id="vault-import-rows" class="vault-import-rows" aria-label="Rows in the file"></ul>
+          <div class="actions">
+            <button id="vault-import-cancel" type="button" class="subtle">Cancel</button>
+            <button id="vault-import-confirm" type="button" class="primary">Import logins</button>
+          </div>
+        </section>
+        <form id="login-form" class="login-form" autocomplete="off" hidden>
+          <h3 id="login-form-title">Add a login</h3>
+          <label>Site<input id="login-origin" name="origin" required placeholder="https://example.com" autocomplete="off" spellcheck="false"></label>
+          <label>Username or email<input id="login-username" name="username" autocomplete="off" spellcheck="false"></label>
+          <label>Password<input id="login-password" name="password" type="password" autocomplete="off" aria-describedby="login-password-help"></label>
+          <p id="login-password-help" class="helper">Goes straight to the keychain. It is never shown here.</p>
+          <label>Label<input id="login-label" name="label" autocomplete="off" placeholder="Optional"></label>
+          <div class="actions">
+            <button id="login-form-cancel" type="button" class="subtle">Cancel</button>
+            <button id="login-form-save" class="primary">Save login</button>
+          </div>
+        </form>
+        <details id="vault-never" class="vault-never">
+          <summary>Sites Caddi never offers to save</summary>
+          <ul id="vault-never-list" class="vault-never-list"></ul>
+          <p id="vault-never-empty" class="helper">None. Choose “Never for this site” when Caddi offers to save a login.</p>
+        </details>
+      </div>
+      <div id="vault-activity-panel" role="tabpanel" aria-labelledby="vault-tab-activity" hidden>
+        <p class="helper">Every time a login was used or an agent tried to: who, what happened, when. Kept on this Mac for this workspace, at most 1,000 entries. Agents can’t read it, and it is never exported.</p>
+        <label>Show<select id="vault-activity-filter"><option value="">All logins</option></select></label>
+        <ol id="vault-activity-list" class="vault-activity-list" aria-label="Vault activity"></ol>
+        <p id="vault-activity-empty" class="helper" hidden>Nothing yet.</p>
+        <div class="actions"><button id="vault-activity-clear" type="button" class="subtle">Clear activity</button></div>
+      </div>
+    </div>
+    <footer class="dialog-actions dialog-footer">
+      <button id="vault-import-open" type="button" class="subtle">Import logins…</button>
+      <button id="login-add" type="button" class="subtle">Add login</button>
+    </footer>
+  </dialog>
+
+  <dialog id="login-fill-dialog" closedby="any" class="dialog-small" aria-labelledby="login-fill-title" aria-describedby="login-fill-site">
+    <header class="dialog-header">
+      <h2 id="login-fill-title">Fill from the Vault</h2>
+      <button id="close-login-fill" type="button" class="icon" aria-label="Close" data-icon="close"></button>
+    </header>
+    <div class="dialog-body">
+      <p id="login-fill-site" class="helper"></p>
+      <div id="login-fill-list" class="login-fill-list"></div>
+    </div>
+  </dialog>
+
+  <dialog id="storage-dialog" closedby="any" class="dialog-small" aria-labelledby="storage-title">
+    <header class="dialog-header">
+      <div>
+        <h2 id="storage-title">Workspace storage</h2>
+        <p id="storage-workspace" class="eyebrow"></p>
+      </div>
+      <button id="close-storage" type="button" class="icon" aria-label="Close workspace storage" data-icon="close"></button>
+    </header>
+    <div class="dialog-body">
+      <p id="storage-state" class="storage-state status-chip">Ready</p>
+      <dl class="storage-values">
+        <div>
+          <dt>Profile size</dt>
+          <dd id="storage-profile">—</dd>
+        </div>
+        <div>
+          <dt>Web cache</dt>
+          <dd id="storage-cache">—</dd>
+        </div>
+      </dl>
+      <p class="helper">The two numbers overlap, so do not add them together.</p>
+      <p id="storage-status" class="helper" role="status"></p>
+    </div>
+    <footer class="dialog-actions dialog-footer">
+      <button id="refresh-storage" type="button" class="subtle">Measure again</button>
+    </footer>
+  </dialog>
+
+  <dialog id="preview-address-dialog" closedby="any" class="dialog-small" aria-labelledby="preview-address-title" aria-describedby="preview-address-description">
+    <form id="preview-address-form" class="dialog-form">
+      <header class="dialog-header">
+        <h2 id="preview-address-title">Preview an address</h2>
+      </header>
+      <div class="dialog-body">
+        <p id="preview-address-description" class="helper">Open one page without adding a tab. It uses this workspace’s sign-ins and can change site data.</p>
+        <div class="field">
+          <label class="field-label" for="preview-address-input">Web address</label>
+          <input id="preview-address-input" type="url" maxlength="8192" placeholder="https://example.com" autocomplete="off" spellcheck="false" required>
+        </div>
+        <p id="preview-address-error" class="form-error" role="alert" hidden></p>
+      </div>
+      <footer class="dialog-actions dialog-footer">
+        <button id="cancel-preview-address" type="button" class="subtle">Cancel</button>
+        <button type="submit" class="primary">Open preview</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="portability-dialog" closedby="any" class="dialog-medium" aria-labelledby="portability-title" aria-describedby="portability-description">
+    <header class="dialog-header">
+      <h2 id="portability-title">Import and export</h2>
+      <button id="portability-close" type="button" class="icon" aria-label="Close import and export" data-icon="close"></button>
+    </header>
+    <div class="portability-scroll dialog-body">
+      <p id="portability-description" class="helper">Move your workspaces, tabs and folders in or out of Caddi as a file. You review everything before anything changes.</p>
+      <section id="portability-setup" aria-label="Choose an operation">
+        <fieldset class="portability-operation">
+          <legend class="sr-only">Operation</legend>
+          <div class="segmented">
+            <label><input id="portability-import-mode" type="radio" name="portability-operation" value="import" checked><span>Import</span></label>
+            <label><input id="portability-export-mode" type="radio" name="portability-operation" value="export"><span>Export</span></label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label class="field-label" for="portability-format">File format</label>
+          <select id="portability-format">
+            <option value="caddi">Caddi workspace file (.json)</option>
+            <option value="bookmarks">Bookmarks file (.html)</option>
+          </select>
+        </div>
+        <fieldset id="portability-export-scope" hidden>
+          <legend>Workspaces to export</legend>
+          <div id="portability-workspaces"></div>
+        </fieldset>
+        <p class="helper">Imported workspaces start signed out. Site sign-ins, service keys and agent access are never included.</p>
+        <button id="portability-start" type="button" class="primary">Choose file…</button>
+      </section>
+      <section id="portability-review" aria-labelledby="portability-review-title" hidden>
+        <h3 id="portability-review-title" tabindex="-1">Review this import</h3>
+        <p id="portability-source" class="portability-source"></p>
+        <dl id="portability-counts" class="portability-counts"></dl>
+        <div id="portability-capacity"></div>
+        <ul id="portability-warnings" class="portability-warnings"></ul>
+        <div class="field">
+          <label class="field-label" for="portability-section">Show</label>
+          <select id="portability-section">
+            <option value="mappings">What will be added</option>
+            <option value="skipped">Skipped items</option>
+            <option value="redactions">Removed information</option>
+          </select>
+        </div>
+        <ol id="portability-rows" class="portability-rows"></ol>
+        <nav class="portability-pager" aria-label="Review pages">
+          <button id="portability-previous" type="button" class="subtle">Previous</button>
+          <span id="portability-page-status" role="status">0 items</span>
+          <button id="portability-next" type="button" class="subtle">Next</button>
+        </nav>
+      </section>
+      <p id="portability-state" class="helper" role="status" aria-live="polite"></p>
+    </div>
+    <footer class="portability-footer dialog-footer">
+      <button id="portability-cancel" type="button" class="subtle">Cancel</button>
+      <button id="portability-apply" type="button" class="primary" hidden>Import workspaces</button>
+    </footer>
+  </dialog>
+
+  <dialog id="live-dialog" closedby="any" class="dialog-small" aria-labelledby="live-dialog-title" aria-describedby="live-dialog-copy">
+    <header class="dialog-header">
+      <h2 id="live-dialog-title">Start Live</h2>
+    </header>
+    <div class="dialog-body">
+      <p id="live-dialog-copy" class="helper">Choose the agent that gets what you say.</p>
+      <div id="live-dialog-agents" class="live-agents"></div>
+    </div>
+    <footer class="dialog-actions dialog-footer">
+      <button type="button" id="live-dialog-cancel" class="subtle">Cancel</button>
+      <button type="button" id="live-dialog-connect" class="primary" hidden>Open Agents</button>
+    </footer>
+  </dialog>
+
+  <div id="toast" role="status" hidden></div>
+  <script type="module" src="/renderer.mjs"></script>
+  <script type="module" src="/annotate.mjs"></script>
+  <script type="module" src="/live.mjs"></script>
+  <script type="module" src="/board.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.caddi-development/
+.test-artifacts/
+/release-source-manifest.json
+*.log
+.DS_Store
+reference/
+research-private/
+downloads/
+!src/caddi/downloads/
+*.dmg
+*.app/
+*.har
+.env
+.env.*
+!.env.example
+
+# Local tooling and editor state. Never part of the project.
+.agents/
+.claude/
+.codex/
+.cursor/
+.superpowers/
+.playwright-mcp/
+.vscode/
+.idea/

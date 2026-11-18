@@ -1,0 +1,43 @@
+/* Annotate: toolbar toggle extras. The shared toolbar rules for #annotate live
+   in styles.css; the in-page markers, popover and bar are styled by the page
+   preload inside its own shadow root and cannot see anything in this file. */
+
+.annotate-toggle[aria-busy="true"] {
+  cursor: progress;
+}
+
+.annotate-toggle:disabled {
+  opacity: 0.5;
+}
+
+.annotate-toggle:focus-visible {
+  outline: 2px solid var(--focus, #3e7f97);
+  outline-offset: 2px;
+}
+
+/* Number of notes on the page while the mode is on. */
+.annotate-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.22);
+  color: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.annotate-count[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .annotate-toggle {
+    transition: none;
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Caddi Synthetic Marker",
+  "version": "1.0.0",
+  "description": "Original local fixture for the bounded Caddi development extension check.",
+  "content_scripts": [
+    {
+      "matches": ["http://127.0.0.1:38457/caddi-extension/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false,
+      "match_about_blank": false,
+      "world": "ISOLATED"
+    }
+  ]
+}

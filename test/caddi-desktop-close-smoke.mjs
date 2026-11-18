@@ -1,0 +1,180 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import http from 'node:http';
+import { once } from 'node:events';
+import { app, nativeImage } from 'electron';
+
+const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function until(check, label) {
+  const deadline = Date.now() + 10000;
+  while (Date.now() < deadline) { if (await check()) return; await pause(30); }
+  throw new Error('CLOSE_SMOKE_TIMEOUT ' + label);
+}
+
+export async function runDesktopCloseSmoke(browser, { projectRoot }) {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+    response.end('<!doctype html><title>Unsaved close fixture</title><input id="draft" value="untouched"><script>window.trustedChanges=[];draft.addEventListener("input",event=>{trustedChanges.push(event.isTrusted);if(event.isTrusted)window.onbeforeunload=unload=>{unload.preventDefault();unload.returnValue=""}})</script>');
+  });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  const proof = path.join(projectRoot, '.test-artifacts', 'caddi-close-proof');
+  await fs.mkdir(proof, { recursive: true });
+  let prompts = 0;
+  browser.setTestCloseDecision(async () => { prompts++; return false; });
+  try {
+    assert.equal(await browser.requestQuit(), true, 'blank clean shell needs no confirmation');
+    assert.equal(prompts, 0);
+    const workspaceId = browser.getState().workspaces.find(item => item.kind === 'project').id;
+    const origin = 'http://127.0.0.1:' + server.address().port;
+    const tabId = await browser.act({ type: 'tab.create', workspaceId, input: origin + '/dirty' });
+    await until(() => browser.engine.navigation({ workspaceId, tabId }).title === 'Unsaved close fixture', 'page load');
+    const view = browser.engine.getView({ workspaceId, tabId }), wc = view.webContents;
+    browser.window.show(); browser.window.focus(); browser.window.focusOnWebView(); wc.focus();
+    await until(() => browser.window.isFocused() && view.getVisible(), 'focused native view');
+    await pause(180);
+    const point = await wc.executeJavaScript('(()=>{const r=draft.getBoundingClientRect();return{x:Math.round(r.x+10),y:Math.round(r.y+10)}})()');
+    for (const input of [{ type:'mouseMove', ...point }, { type:'mouseDown', button:'left', clickCount:1, ...point },
+      { type:'mouseUp', button:'left', clickCount:1, ...point }, { type:'keyDown', keyCode:'X' },
+      { type:'char', keyCode:'X' }, { type:'keyUp', keyCode:'X' }]) wc.sendInputEvent(input);
+    await until(() => wc.executeJavaScript('draft.value.includes("X")&&trustedChanges.includes(true)'), 'trusted dirty input');
+    const originalTarget = browser.engine.getTarget({ workspaceId, tabId });
+    const [first, second] = await Promise.all([browser.act({ type:'tab.close', tabId }), browser.act({ type:'tab.close', tabId })]);
+    assert.deepEqual(first, { closed:false }); assert.deepEqual(second, { closed:false });
+    assert.equal(prompts, 1, 'reentrant close shares one decision');
+    assert.equal(wc.isDestroyed(), false);
+    assert.equal(await wc.executeJavaScript('draft.value.includes("X")'), true);
+    assert.equal(browser.getState().tabs.find(item => item.id === tabId).status, 'open');
+    assert.equal(browser.engine.getTarget({ workspaceId, tabId }).documentGeneration, originalTarget.documentGeneration);
+    await fs.writeFile(path.join(proof, 'stay-native.png'), (await browser.window.capturePage()).toPNG());
+    await fs.writeFile(path.join(proof, 'stay-owned-page.png'), (await wc.capturePage()).toPNG());
+    console.log('CLOSE_STAY_OK', JSON.stringify({ prompts, tabId, webContentsId:wc.id }));
+
+    let resolvePrompt;
+    browser.setTestCloseDecision(async () => { prompts++; return new Promise(resolve => { resolvePrompt = resolve; }); });
+    const pending = browser.act({ type:'tab.close', tabId });
+    await until(() => !!resolvePrompt, 'pending close decision');
+    const otherWorkspace = browser.getState().workspaces.find(item => item.id !== workspaceId).id;
+    const switchTask = browser.act({ type:'workspace.select', workspaceId:otherWorkspace });
+    assert.deepEqual(await pending, { closed:false });
+    resolvePrompt(true);
+    await Promise.race([switchTask, pause(8000).then(() => { throw new Error('CLOSE_SWITCH_PENDING ' + JSON.stringify(browser.engine.lifecycleDiagnostics?.())); })]);
+    assert.equal(wc.isDestroyed(), false, 'late approval after workspace switch cannot close old page');
+    await browser.act({ type:'workspace.select', workspaceId });
+    let resolveNavigationPrompt;
+    browser.setTestCloseDecision(async () => { prompts++; return new Promise(resolve => { resolveNavigationPrompt = resolve; }); });
+    const navigationPending = browser.act({ type:'tab.close', tabId });
+    await until(() => !!resolveNavigationPrompt, 'navigation race close prompt');
+    await wc.executeJavaScript('history.pushState({}, "", "/changed")');
+    assert.deepEqual(await navigationPending, { closed:false });
+    resolveNavigationPrompt(true);
+    assert.equal(wc.isDestroyed(), false, 'new page context rejects stale close approval');
+    let resolvePrivacyPrompt;
+    browser.setTestCloseDecision(async () => { prompts++; return new Promise(resolve => { resolvePrivacyPrompt = resolve; }); });
+    const privacyPending = browser.act({ type:'tab.close', tabId });
+    await until(() => !!resolvePrivacyPrompt, 'privacy race close prompt');
+    await browser.act({ type:'privacy.enter', workspaceId });
+    assert.deepEqual(await privacyPending, { closed:false });
+    resolvePrivacyPrompt(true);
+    assert.equal(wc.isDestroyed(), false, 'private takeover cancels pending ordinary close');
+    await browser.act({ type:'privacy.resume', workspaceId });
+    browser.setTestCloseDecision(async () => { prompts++; return true; });
+    const siblingId = await browser.act({ type:'tab.create', workspaceId, input:origin+'/sibling' });
+    await until(() => browser.engine.navigation({ workspaceId, tabId:siblingId }).title === 'Unsaved close fixture', 'sibling page');
+    const leave = await browser.act({ type:'tab.close', tabId });
+    assert.deepEqual(leave, { closed:true });
+    assert.equal(wc.isDestroyed(), true);
+    assert.equal(browser.getState().tabs.find(item => item.id === tabId).status, 'closed');
+    assert.equal(browser.getState().tabs.find(item => item.id === siblingId).status, 'open');
+    console.log('CLOSE_LEAVE_OK', JSON.stringify({ prompts, siblingId }));
+
+    browser.setTestCloseDecision(async () => { prompts++; return false; });
+    assert.equal(await browser.requestQuit(), false, 'bulk quit default keep open');
+    assert.equal(browser.getState().tabs.find(item => item.id === siblingId).status, 'open');
+    const beforeTransfer = prompts, siblingWC = browser.engine.getView({ workspaceId, tabId:siblingId }).webContents;
+    const opened = await browser.act({ type:'window.open-workspace' });
+    await until(() => browser.getWindows().length === 2, 'secondary window');
+    const secondary = browser.getWindows().find(item => item.id === opened.windowId).window;
+    secondary.close();
+    await until(() => browser.getWindows().length === 1, 'secondary transferred');
+    assert.equal(browser.engine.getView({ workspaceId, tabId:siblingId }).webContents, siblingWC);
+    assert.equal(prompts, beforeTransfer, 'live-page transfer must not show data-loss prompt');
+    await browser.act({type:'workspace.select',workspaceId});
+    const dirtyWindow=await browser.act({type:'window.open-workspace'});
+    await until(()=>browser.getWindows().length===2,'window for dirty review close');
+    const dirtyChrome=browser.getWindows().find(item=>item.id===dirtyWindow.windowId).window;
+    const dirtyWC=dirtyChrome.webContents;
+    await until(()=>dirtyWC.executeJavaScript('!!globalThis.__caddiReviewDirtySnapshot'),'dirty review chrome ready');
+    const pageDraft=await dirtyWC.executeJavaScript('window.caddi.action({type:"review.page",tabId:'+JSON.stringify(siblingId)+'})');
+    assert.equal(pageDraft.ok,true,JSON.stringify(pageDraft));
+    await until(()=>dirtyWC.executeJavaScript('!document.getElementById("draft-editor").hidden'),'review editor ready');
+    await dirtyWC.executeJavaScript('(()=>{const node=document.getElementById("feedback-text");node.value="Unsaved transcript stays in this window";node.dispatchEvent(new Event("input",{bubbles:true}));})()');
+    assert.equal((await dirtyWC.executeJavaScript('globalThis.__caddiReviewDirtySnapshot()')).dirty,true);
+    const reviewKinds=[];
+    browser.setTestCloseDecision(async ({kind})=>{reviewKinds.push(kind);prompts++;return false;});
+    dirtyChrome.close();
+    await until(()=>reviewKinds.length===1,'unsaved transcript close warning');
+    assert.equal(reviewKinds[0],'review-transfer');
+    assert.equal(dirtyChrome.isDestroyed(),false);
+    assert.equal(await dirtyWC.executeJavaScript('document.getElementById("feedback-text").value'),'Unsaved transcript stays in this window');
+    await dirtyWC.executeJavaScript('document.getElementById("save-draft").click()');
+    await until(()=>dirtyWC.executeJavaScript('!globalThis.__caddiReviewDirtySnapshot().dirty'),'transcript saved locally');
+    const info=browser.engine.getPageInfo({workspaceId,tabId:siblingId});
+    const image=nativeImage.createFromBitmap(Buffer.alloc(4*4*4,180),{width:4,height:4}).toPNG();
+    const momentDraft=await browser.access.createDraft({target:{...info.target,origin:info.origin},
+      selection:{kind:'page',label:'Synthetic close review'},artifacts:[{artifactId:'close-moment-image',kind:'screenshot',mediaType:'image/png',data:image}],
+      evidenceMoments:[{momentId:'close-moment-one',atMs:0,capturedTarget:{...info.target,origin:info.origin},artifactId:'close-moment-image',note:'',marks:[]}]});
+    const selected=await dirtyWC.executeJavaScript('window.caddi.action({type:"review.select",workspaceId:'+JSON.stringify(workspaceId)+',feedbackId:'+JSON.stringify(momentDraft.feedbackId)+'})');
+    assert.equal(selected.ok,true,JSON.stringify(selected));
+    await until(()=>dirtyWC.executeJavaScript('!document.getElementById("moment-editor").hidden'),'moment note ready');
+    await dirtyWC.executeJavaScript('(()=>{const node=document.getElementById("moment-note");node.value="Unsaved moment note stays";node.dispatchEvent(new Event("input",{bubbles:true}));})()');
+    dirtyChrome.close();
+    await until(()=>reviewKinds.length===2,'unsaved moment close warning');
+    assert.equal(dirtyChrome.isDestroyed(),false);
+    assert.equal(await dirtyWC.executeJavaScript('document.getElementById("moment-note").value'),'Unsaved moment note stays');
+    await fs.writeFile(path.join(proof,'dirty-review-stay.png'),(await dirtyChrome.capturePage()).toPNG());
+    await dirtyWC.executeJavaScript('globalThis.__caddiSavedDirtySnapshot=globalThis.__caddiReviewDirtySnapshot;globalThis.__caddiReviewDirtySnapshot=undefined');
+    dirtyChrome.close();
+    await pause(180);
+    assert.equal(dirtyChrome.isDestroyed(),false,'unavailable dirty state must fail closed without transferring');
+    assert.equal(reviewKinds.length,2,'unavailable dirty state cannot authorize a discard prompt');
+    await dirtyWC.executeJavaScript('globalThis.__caddiReviewDirtySnapshot=globalThis.__caddiSavedDirtySnapshot;delete globalThis.__caddiSavedDirtySnapshot');
+    let resolveReviewPrompt;
+    browser.setTestCloseDecision(async ({kind})=>{reviewKinds.push(kind);prompts++;return new Promise(resolve=>{resolveReviewPrompt=resolve;});});
+    dirtyChrome.close();
+    await until(()=>!!resolveReviewPrompt,'pending review-transfer decision');
+    await dirtyWC.executeJavaScript('(()=>{const note=document.getElementById("moment-note");note.value="Edited while the close dialog is pending";note.dispatchEvent(new Event("input",{bubbles:true}));})()');
+    resolveReviewPrompt(true);
+    await pause(180);
+    assert.equal(dirtyChrome.isDestroyed(),false,'late discard decision cannot close changed review text');
+    assert.equal(await dirtyWC.executeJavaScript('document.getElementById("moment-note").value'),'Edited while the close dialog is pending');
+    browser.setTestCloseDecision(async ({kind})=>{reviewKinds.push(kind);prompts++;return true;});
+    dirtyChrome.close();
+    await until(()=>browser.getWindows().length===1,'confirmed dirty review transfer');
+    assert.deepEqual(reviewKinds,['review-transfer','review-transfer','review-transfer','review-transfer']);
+    assert.equal(browser.engine.getView({workspaceId,tabId:siblingId}).webContents,siblingWC);
+    console.log('CLOSE_REVIEW_TRANSFER_OK',JSON.stringify({reviewKinds,transcriptPreservedOnStay:true,momentNotePreservedOnStay:true,missingSnapshotRejected:true,lateEditRejected:true}));
+    browser.setTestCloseDecision(async () => { prompts++; return false; });
+    await browser.act({ type:'workspace.select', workspaceId });
+    await browser.act({ type:'tab.select', tabId:siblingId });
+    const draft = await browser.act({ type:'review.page', tabId:siblingId });
+    assert.ok(draft.feedbackId, 'session feedback exists before bulk close');
+    const beforeCleanTab = prompts;
+    assert.deepEqual(await browser.act({ type:'tab.close', tabId:siblingId }), { closed:true });
+    assert.equal(prompts, beforeCleanTab, 'page without beforeunload closes without a tab warning');
+    assert.equal(await browser.requestQuit(), false, 'session feedback still requires confirmation with no loaded site');
+    assert.equal(prompts, beforeCleanTab + 1);
+    const beforeNativeClose = prompts;
+    browser.window.close();
+    await until(() => prompts === beforeNativeClose + 1, 'native last-window close warning');
+    assert.equal(browser.window.isDestroyed(), false, 'Keep Open retains native window');
+    const beforeAppQuit = prompts;
+    app.quit();
+    await until(() => prompts === beforeAppQuit + 1, 'native app quit warning');
+    assert.equal(browser.window.isDestroyed(), false, 'cancelled app quit keeps native window');
+    console.log('CLOSE_BULK_FEEDBACK_OK', JSON.stringify({ prompts, transferPreserved:true, cleanClosePrompted:false }));
+  } finally {
+    browser.setTestCloseDecision(async () => true);
+    server.closeAllConnections(); server.close();
+  }
+}
