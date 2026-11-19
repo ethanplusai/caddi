@@ -62,7 +62,7 @@ body:
     attributes:
       label: Caddi version
       description: The version in Caddi's About window, or the commit you are on (git rev-parse --short HEAD).
-      placeholder: '0.1.3 or commit abc1234'
+      placeholder: '0.1.4 or commit abc1234'
     validations:
       required: true
   - type: input

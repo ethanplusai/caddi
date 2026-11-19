@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createDesktopApp } from './app.mjs';
 import { ensurePrivateDirectory } from './profile-paths.mjs';
+import { setAsideEarlierData } from './earlier-data.mjs';
 import { createProductStore } from '../state/store.mjs';
 import { loadInProcessKeyBoundary } from '../platform/in-process-keychain.mjs';
 import { createKeychainLoginSecrets, createFakeLoginSecrets, loginKeychainService } from '../platform/login-secrets.mjs';
@@ -104,7 +105,7 @@ app.on('open-url', (event, raw) => {
   const result = externalLinks.intake(raw);
   if (result.accepted) offerWaitingLinks();
 });
-let runRoot, dataRoot;
+let runRoot, dataRoot, earlierDataFolder = null;
 let interceptedPrints = 0;
 const copiedNotes = [];
 if (smoke) {
@@ -113,7 +114,10 @@ if (smoke) {
   runRoot = await fs.realpath(await fs.mkdtemp(path.join(parent, 'od-')));
   dataRoot = path.join(runRoot, 'data');
 } else if (packaged) {
-  dataRoot = ensurePrivateDirectory(path.join(app.getPath('appData'), releaseBuild ? 'Caddi' : 'Caddi Development'));
+  const folder = path.join(app.getPath('appData'), releaseBuild ? 'Caddi' : 'Caddi Development');
+  // Data from 0.1.2 and earlier cannot be read by this version; keep it whole and start fresh.
+  try { earlierDataFolder = setAsideEarlierData(folder); } catch (error) { console.error('Earlier data could not be set aside:', error.code ?? error.message); }
+  dataRoot = ensurePrivateDirectory(folder);
   runRoot = await fs.realpath(await fs.mkdtemp(path.join(dataRoot, 'run-')));
 } else {
   const artifacts = path.join(projectRoot, '.test-artifacts');
@@ -295,6 +299,12 @@ if (!smoke && !app.requestSingleInstanceLock()) {
     }
     if (smoke) loginSecrets = createFakeLoginSecrets({ service: 'build.caddi.test.smoke' });
     browser = await createWithRecovery();
+    if (earlierDataFolder) void dialog.showMessageBox({ type: 'info', title: 'Caddi started fresh',
+      message: 'Caddi started fresh because this version cannot open data saved by Caddi 0.1.2.',
+      detail: 'Nothing was deleted. Your earlier workspaces, history and website sign-ins are kept in: ' + earlierDataFolder +
+        '\n\nReconnect your coding tools from the Agents dialog.',
+      buttons: ['OK', 'Show folder'], defaultId: 0, cancelId: 0, noLink: true })
+      .then(result => { if (result.response === 1) shell.showItemInFolder(earlierDataFolder); }).catch(() => {});
     if (!smoke) {
       const owner = browser, access = owner.access;
       const assertOwner = () => {

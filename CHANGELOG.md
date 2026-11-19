@@ -2,12 +2,18 @@
 
 Notable changes to Caddi are recorded here. Caddi is pre-1.0, and anything may change between commits.
 
+## 0.1.4 (2026-11-19)
+
+### Fixed
+
+- **Updating from 0.1.2 opens Caddi instead of quitting.** 0.1.3 could not read data saved by 0.1.2 and stopped at a "workspace data needs attention" dialog. Caddi now moves that data, untouched, to a folder named "Caddi (data from an earlier version)" next to its own, starts fresh and says where the old data is. Nothing is deleted.
+
 ## 0.1.3 (2026-11-18)
 
 ### Changed
 
 - **Agent tool names begin with `caddi_`**, for example `caddi_observe` and `caddi_click`. Reconnect any agent you connected to an earlier version, and update prompts or scripts that name tools.
-- **Saved data starts fresh.** Caddi keeps its keys under a new keychain name, so workspaces, tabs and Vault logins from 0.1.2 do not carry over.
+- **Saved data starts fresh.** Workspaces, tabs and Vault logins from 0.1.2 do not carry over. (In 0.1.3 itself, updating from 0.1.2 stopped at a dialog; 0.1.4 fixes that.)
 - **Electron 45.3.2.** Brings the Chromium and Node.js security fixes since 45.0.0.
 - Agents see Caddi's real version when they connect.
 
