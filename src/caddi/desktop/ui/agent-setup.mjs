@@ -53,9 +53,10 @@ export function agentToolsView(snapshot) {
   const stable = snapshot?.connectionSetup?.mode === 'stable' && snapshot.connectionSetup.status === 'ready';
   const tools = snapshot?.privateBrowsing || !Array.isArray(snapshot?.agentTools) ? [] :
     snapshot.agentTools.filter(tool => tool?.installed === true && typeof tool.id === 'string' && typeof tool.name === 'string');
-  // A stale set-up points at a copy of Caddi that is gone (moved, or run from its disk image); connecting again repairs it.
+  // A stale set-up points at a copy of Caddi that is gone (moved, or run from its disk image) or was made by an
+  // earlier version; connecting again repairs it.
   return { visible: tools.length > 0, stable, tools: tools.map(tool => { const stale = tool.connected === true && tool.stale === true; return { id: tool.id, name: tool.name, connected: tool.connected === true, stale,
-    status: stale ? 'Set up for a copy of Caddi that is no longer there. Reconnect to fix it.' : tool.connected ? 'Connected. It asks here the first time it uses Caddi.' : stable ? 'Ready to connect' : 'Waiting for a stable connection address',
+    status: stale ? 'Set up by an earlier version of Caddi, or for a copy that is no longer there. Reconnect to fix it.' : tool.connected ? 'Connected. It asks here the first time it uses Caddi.' : stable ? 'Ready to connect' : 'Waiting for a stable connection address',
     action: stale ? 'Reconnect' : tool.connected ? 'Remove' : 'Connect', disabled: (stale || !tool.connected) && !stable }; }) };
 }
 

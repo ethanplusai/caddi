@@ -157,14 +157,16 @@ export function createAgentTools({ home = os.homedir(), env = process.env, entry
     } catch { return { command: null, script: null }; }
   }
   /** Set up, but for a copy of Caddi that is no longer there (moved to Applications, run from its disk image,
-   * or updated to a version whose client script has a different name). */
+   * or updated to a version whose client script has a different name), or by an earlier version that started
+   * the client with another program (0.1.4 and earlier used Caddi's own executable, which no longer runs scripts). */
   function stale(tool) {
     const { command, script } = entryProgram(tool);
     try {
       if (command && path.isAbsolute(command) && !fs.existsSync(command)) return true;
-      if (!script || !path.isAbsolute(script) || fs.existsSync(script)) return false;
       let current = null;
       try { current = entry(); } catch {}
+      if (command && path.isAbsolute(command) && validEntry(current) && path.isAbsolute(current.command) && command !== current.command) return true;
+      if (!script || !path.isAbsolute(script) || fs.existsSync(script)) return false;
       return !(validEntry(current) && current.args.includes(script));
     } catch { return false; }
   }

@@ -16,9 +16,19 @@ import { createExternalLinks } from './external-links.mjs';
 import { createSystemLifecycle } from './system-lifecycle.mjs';
 import { createOwnedSystemProof } from './owned-system-proof.mjs';
 import { publishDesktopRendezvous } from '../access/rendezvous.mjs';
+import { CONNECTOR_NODE, CONNECTOR_RESOURCE_DIRECTORY } from './connector-pins.mjs';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const packaged = app.isPackaged;
+// A coding tool set up by Caddi 0.1.4 or earlier starts the agent client with Caddi's own executable and
+// ELECTRON_RUN_AS_NODE. That no longer runs scripts, so it lands here: say what to do and leave at once,
+// before anything else starts (no window, no data folder, no single-instance lock).
+if (packaged && path.resolve(process.argv[1] ?? '') === path.join(projectRoot, 'scripts', 'caddi-desktop-client.mjs')) {
+  app.dock?.hide();
+  process.stderr.write('CADDI_CONNECTION_OUTDATED: This Caddi connection was set up by an earlier version. Open Caddi, then choose Reconnect for this tool in the Agents dialog.\n');
+  app.exit(2);
+  await new Promise(() => {});
+}
 // The public build carries channel "release" in its sealed manifest. It gets its own name and
 // data folder; a source run and the local development bundle keep theirs.
 let releaseBuild = false;
@@ -177,8 +187,9 @@ async function createWithRecovery() {
     testRevealFile: smoke ? file => fs.writeFile(path.join(runRoot, 'revealed-download.txt'), file) : null,
     // Automated runs never look at, or change, the real coding tools on this Mac.
     agentToolsHome: smoke ? path.join(runRoot, 'agent-tools-home') : null,
-    // A packaged app starts the agent client with its own executable, so no separate Node.js is needed.
-    agentRuntime: packaged ? { command: process.execPath, env: { ELECTRON_RUN_AS_NODE: '1' } } : null,
+    // A packaged app starts the agent client on its bundled, pinned Node.js runtime, so nobody has to install
+    // Node.js. Caddi's own executable cannot run scripts as Node (its Electron fuses are off).
+    agentRuntime: packaged ? { command: path.join(path.dirname(projectRoot), CONNECTOR_RESOURCE_DIRECTORY, CONNECTOR_NODE.program.bundled), env: {} } : null,
     firstRunWelcome: !smoke };
   try { return await createDesktopApp(options); }
   catch (error) {
