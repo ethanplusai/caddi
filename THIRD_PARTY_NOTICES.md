@@ -20,11 +20,12 @@ A local app bundle made with `npm run package:caddi` is a copy of that runtime a
 
 ## npm packages
 
-These are all the packages in `package-lock.json`. Electron is the only direct dependency. The others are installed because Electron's installer needs them. All are development dependencies. None of their code is loaded by the running app except Electron itself.
+These are all the packages in `package-lock.json`. The direct dependencies are Electron and `@electron/fuses`, which the packager uses to switch off Electron features in the bundle. The others are installed because Electron's installer needs them. All are development dependencies. None of their code is loaded by the running app except Electron itself.
 
 | Package | Version | License |
 | --- | --- | --- |
 | `electron` | 45.3.2 | MIT |
+| `@electron/fuses` | 2.1.3 | MIT |
 | `@electron/get` | 5.1.0 | MIT |
 | `@electron-internal/extract-zip` | 1.0.6 | MIT |
 | `@types/node` | 24.19.2 | MIT |
@@ -39,6 +40,16 @@ These are all the packages in `package-lock.json`. Electron is the only direct d
 | `undici-types` | 7.24.6 | MIT |
 
 Each package's license text is in its directory under `node_modules/` after `npm ci`.
+
+## Agent connector runtime
+
+A packaged bundle includes the official Node.js 26.13.1 program for macOS on Apple silicon, from https://nodejs.org/dist/v26.13.1/. It runs only the agent connector that coding tools start. It is not stored in this repository: `node scripts/fetch-caddi-node.mjs` downloads it and checks it against the fingerprints pinned in `src/caddi/desktop/connector-pins.mjs`. Caddi signs it again with its own Developer ID and narrower entitlements; the program is otherwise unchanged.
+
+| Component | Source | License |
+| --- | --- | --- |
+| Node.js (`node`) | https://nodejs.org/dist/v26.13.1/node-v26.13.1-darwin-arm64.tar.gz | MIT, with bundled third-party components under their own licenses. Copyright Node.js contributors. |
+
+The bundle includes the Node.js license text, with its third-party notices, as `caddi-connector/NODE-LICENSE`.
 
 ## Optional local speech feature
 

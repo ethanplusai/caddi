@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { buildCaddiNative } from './build-caddi-native.mjs';
+import { FuseV1Options, FuseVersion, FuseState, flipFuses, getCurrentFuseWire } from '@electron/fuses';
+import { CONNECTOR_NODE, CONNECTOR_RESOURCE_DIRECTORY, CONNECTOR_SIGNING_IDENTIFIER, CONNECTOR_ENTITLEMENTS } from '../src/caddi/desktop/connector-pins.mjs';
 import { SPEECH_MODEL_ID, SPEECH_SOURCE_COMMIT, SPEECH_PROVENANCE, SPEECH_RESOURCE_DIRECTORY, BUNDLED_SPEECH_PINS } from '../src/caddi/desktop/speech-pins.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -41,6 +43,17 @@ export function caddiMainInfo(runtimeInfo, version, release = false) {
   return info;
 }
 const HELPERS = ['', ' (GPU)', ' (Plugin)', ' (Renderer)'];
+// Electron fuses are switches compiled into the framework binary. These are off in every bundle, so
+// nothing else on the Mac can run its own code as Caddi: not as plain Node (RunAsNode), not through
+// NODE_OPTIONS, and not under a debugger (--inspect). file:// pages also lose Electron's extra
+// privileges. The agent connector runs on its own pinned Node.js runtime instead (connector-pins.mjs).
+export const CADDI_FUSES_OFF = Object.freeze(['RunAsNode', 'EnableNodeOptionsEnvironmentVariable', 'EnableNodeCliInspectArguments', 'GrantFileProtocolExtraPrivileges']);
+/** Throws unless every fuse in CADDI_FUSES_OFF is off in this bundle. */
+export async function verifyCaddiFuses(appRoot) {
+  const wire = await getCurrentFuseWire(appRoot);
+  for (const name of CADDI_FUSES_OFF) check(wire[FuseV1Options[name]] === FuseState.DISABLE, `Electron fuse ${name} must be off.`);
+  return wire;
+}
 export const SOURCE_DIRS = ['src/caddi/access', 'src/caddi/clients', 'src/caddi/desktop', 'src/caddi/downloads', 'src/caddi/feedback', 'src/caddi/history', 'src/caddi/persistence', 'src/caddi/scheduler', 'src/caddi/services', 'src/caddi/updates'];
 export const SOURCE_FILES = ['LICENSE', 'src/caddi/contracts.mjs', 'src/caddi/engine/contract.mjs',
   'src/caddi/qualification/pages.mjs', 'src/caddi/qualification/server.mjs',
@@ -186,6 +199,28 @@ export async function verifyCaddiBundle(output) {
   }
   check(sha256(Buffer.from(JSON.stringify(speech.assets))) === speech.resourceDigest, 'Speech resource digest changed.');
   }
+  await verifyCaddiFuses(output);
+  const connector = manifest.connector;
+  check(connector?.resourceRoot === CONNECTOR_RESOURCE_DIRECTORY && connector.version === CONNECTOR_NODE.version &&
+    connector.program?.path === CONNECTOR_NODE.program.bundled && connector.program.unsignedSha256 === CONNECTOR_NODE.program.sha256 &&
+    connector.license?.path === CONNECTOR_NODE.license.bundled && connector.license.sha256 === CONNECTOR_NODE.license.sha256, 'Missing pinned connector runtime.');
+  const connectorRoot = path.join(resources, CONNECTOR_RESOURCE_DIRECTORY);
+  for (const [entry, executable] of [[connector.program, true], [connector.license, false]]) {
+    const file = path.join(connectorRoot, entry.path), stat = await fs.lstat(file);
+    check(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1 && stat.size === entry.bytes && !(stat.mode & 0o022) &&
+      (!executable || !!(stat.mode & 0o100)) && sha256(await fs.readFile(file)) === entry.sha256, `Connector runtime changed: ${entry.path}`);
+  }
+  run('/usr/bin/codesign', ['--verify', '--strict', path.join(connectorRoot, connector.program.path)]);
+  if (signed) {
+    const details = spawnSync('/usr/bin/codesign', ['--display', '--verbose=4', path.join(connectorRoot, connector.program.path)], { encoding: 'utf8' }).stderr ?? '';
+    check(details.includes(`Identifier=${CONNECTOR_SIGNING_IDENTIFIER}\n`) && details.includes(`TeamIdentifier=${manifest.signing.teamId}`) &&
+      connector.program.sha256 !== connector.program.unsignedSha256, 'Connector runtime is not signed by this build.');
+    // Exactly the reviewed entitlements, nothing the upstream signature allowed beyond them.
+    const entitlements = JSON.parse(run('/usr/bin/plutil', ['-convert', 'json', '-o', '-', '-'],
+      { input: run('/usr/bin/codesign', ['--display', '--entitlements', '-', '--xml', path.join(connectorRoot, connector.program.path)]) }));
+    const sorted = value => JSON.stringify(Object.entries(value).sort(([a], [b]) => a.localeCompare(b, 'en')));
+    check(sorted(entitlements) === sorted(CONNECTOR_ENTITLEMENTS), 'Connector runtime entitlements differ from the reviewed set.');
+  } else check(connector.program.sha256 === connector.program.unsignedSha256, 'Unsigned connector runtime changed.');
   await verifyExecutable(path.join(contents, 'MacOS', PRODUCT));
   for (const suffix of HELPERS) {
     const helper = `${PRODUCT} Helper${suffix}`, helperRoot = path.join(contents, 'Frameworks', helper + '.app');
@@ -315,6 +350,18 @@ export async function packageCaddi({ projectRoot = ROOT, speech = 'required', si
     }
     speechAssets.push({ role: pin.role, path: pin.bundled, bytes: bytes.length, sha256: pin.sha256, source: file });
   }
+  const connectorInputs = [];
+  for (const [pin, executable] of [[CONNECTOR_NODE.program, true], [CONNECTOR_NODE.license, false]]) {
+    const file = path.join(projectRoot, pin.development);
+    let bytes;
+    try { bytes = await requireRegular(file, pin.bytes ?? pin.maximum); }
+    catch (error) { if (error.code === 'ENOENT') throw new Error('The agent connector runtime is missing. Run: node scripts/fetch-caddi-node.mjs'); throw error; }
+    const stat = await fs.lstat(file);
+    check(await fs.realpath(file) === file && stat.uid === process.getuid() && stat.nlink === 1 && !(stat.mode & 0o022) &&
+      (!pin.bytes || bytes.length === pin.bytes) && sha256(bytes) === pin.sha256, `Pinned connector input changed: ${pin.bundled}`);
+    if (executable) check((await verifyExecutable(file)).includes('arm64'), 'Connector runtime must be arm64.');
+    connectorInputs.push({ pin, source: file, bytes: bytes.length, executable });
+  }
   const resourceDigest = sha256(Buffer.from(JSON.stringify(speechAssets.map(({ role, path: name, bytes, sha256: digest }) => ({ role, path: name, bytes, sha256: digest })))));
 
   const dist = path.join(projectRoot, 'dist');
@@ -353,6 +400,16 @@ export async function packageCaddi({ projectRoot = ROOT, speech = 'required', si
     }
     let pinnedResources = speechAssets.map(({ role, path: name, bytes, sha256: digest }) => ({ role, path: name, bytes, sha256: digest }));
     if (speech !== 'none') await fs.writeFile(path.join(speechRoot, 'manifest.json'), json(speechManifest(pinnedResources)), { mode: 0o600 });
+    const connectorRoot = path.join(resources, CONNECTOR_RESOURCE_DIRECTORY);
+    await fs.mkdir(connectorRoot);
+    for (const item of connectorInputs) {
+      const target = path.join(connectorRoot, item.pin.bundled);
+      await fs.copyFile(item.source, target);
+      await fs.chmod(target, item.executable ? 0o755 : 0o644);
+      check(sha256(await fs.readFile(target)) === item.pin.sha256, `Connector copy changed: ${item.pin.bundled}`);
+    }
+    const connectorProgram = path.join(connectorRoot, CONNECTOR_NODE.program.bundled);
+    let connectorSigned = { bytes: CONNECTOR_NODE.program.bytes, sha256: CONNECTOR_NODE.program.sha256 };
     await fs.rm(path.join(resources, 'default_app.asar'));
     await fs.copyFile(path.join(electronRoot, 'dist', 'LICENSE'), path.join(resources, 'Electron-LICENSE'));
     await fs.copyFile(path.join(electronRoot, 'dist', 'LICENSES.chromium.html'), path.join(resources, 'LICENSES.chromium.html'));
@@ -377,6 +434,10 @@ export async function packageCaddi({ projectRoot = ROOT, speech = 'required', si
       helpers.push({ name: newName, bundleId: info.CFBundleIdentifier });
     }
     await verifyExecutable(path.join(contents, 'MacOS', PRODUCT));
+    // Flipped before signing: the change rewrites the framework binary. An unsigned build gets a fresh ad-hoc signature.
+    await flipFuses(stagedApp, { version: FuseVersion.V1, resetAdHocDarwinSignature: !identity,
+      ...Object.fromEntries(CADDI_FUSES_OFF.map(name => [FuseV1Options[name], false])) });
+    await verifyCaddiFuses(stagedApp);
     // Signing works from the inside out: loose code first, then frameworks and helper apps. The outer
     // bundle is signed last, after the manifest exists, so the signature also seals the manifest.
     let addonSha256 = native.sha256, entitlementsFile = null;
@@ -401,6 +462,15 @@ export async function packageCaddi({ projectRoot = ROOT, speech = 'required', si
         pinnedResources = pinnedResources.map(entry => entry.role === 'program' ? { ...entry, signedBytes: signed.length, signedSha256: sha256(signed) } : entry);
         await fs.writeFile(path.join(speechRoot, 'manifest.json'), json(speechManifest(pinnedResources)), { mode: 0o600 });
       }
+      // The connector runtime gets its own identifier and only the entitlements V8 needs, replacing the
+      // upstream signature (which allows debugging and dyld variables, and would fail notarization).
+      const connectorEntitlements = path.join(stage, 'connector-entitlements.plist');
+      await writePlist(connectorEntitlements, CONNECTOR_ENTITLEMENTS);
+      run('/usr/bin/codesign', ['--force', '--sign', identity.hash, '--timestamp', '--options', 'runtime',
+        '--identifier', CONNECTOR_SIGNING_IDENTIFIER, '--entitlements', connectorEntitlements, connectorProgram]);
+      run('/usr/bin/codesign', ['--verify', '--strict', connectorProgram]);
+      const signedConnector = await fs.readFile(connectorProgram);
+      connectorSigned = { bytes: signedConnector.length, sha256: sha256(signedConnector) };
     }
     const sealed = identity ? sealedBySignature(PRODUCT) : [];
     const payload = await inventory(stagedApp, '', new Set(sealed));
@@ -411,6 +481,10 @@ export async function packageCaddi({ projectRoot = ROOT, speech = 'required', si
       mediaUsageDescriptions: caddiMediaUsage(PRODUCT),
       speech: speech === 'none' ? null : { resourceRoot: SPEECH_RESOURCE_DIRECTORY, assets: pinnedResources,
         resourceDigest: identity ? sha256(Buffer.from(JSON.stringify(pinnedResources))) : resourceDigest },
+      connector: { resourceRoot: CONNECTOR_RESOURCE_DIRECTORY, version: CONNECTOR_NODE.version, source: CONNECTOR_NODE.archive.url,
+        program: { path: CONNECTOR_NODE.program.bundled, unsignedSha256: CONNECTOR_NODE.program.sha256, ...connectorSigned },
+        license: { path: CONNECTOR_NODE.license.bundled, bytes: connectorInputs.find(item => !item.executable).bytes, sha256: CONNECTOR_NODE.license.sha256 },
+        fusesOff: CADDI_FUSES_OFF },
       nativeAddon: { path: 'native/caddi-keys.node', sha256: addonSha256, ...(identity ? { unsignedSha256: native.sha256 } : {}), sourceSha256: native.sourceSha256,
         architecture: native.architecture, keychainQualified: false },
       signing: identity ? { identity: identity.name, teamId: identity.teamId, hardenedRuntime: true, entitlements: ENTITLEMENTS,

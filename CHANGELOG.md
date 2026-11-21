@@ -2,6 +2,17 @@
 
 Notable changes to Caddi are recorded here. Caddi is pre-1.0, and anything may change between commits.
 
+## 0.1.5 (2026-11-21)
+
+### Security
+
+- **Other programs can no longer run code as Caddi.** Until now, any program on your Mac could start Caddi's executable as plain Node.js and run its own code with Caddi's identity, which the keychain trusts for Caddi's saved logins. Caddi now switches off those Electron features (run as Node, `NODE_OPTIONS` and the `--inspect` debugger), and the build refuses to finish if they are on.
+- **The agent connector runs on its own Node.js.** Coding tools now start the connector with a pinned copy of Node.js 26.13.1 inside Caddi, signed with its own identifier. You still do not need to install Node.js.
+
+### Changed
+
+- **Reconnect your coding tools once.** Tools set up by 0.1.4 or earlier show "Reconnect" in the Agents dialog. Until you do, they report that the connection is out of date.
+
 ## 0.1.4 (2026-11-19)
 
 ### Fixed

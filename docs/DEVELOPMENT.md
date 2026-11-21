@@ -87,6 +87,9 @@ It needs more than a source run does:
 - Xcode command line tools (`xcrun clang`), to compile a small native addon from `src/caddi/platform/keychain-addon.m`
 - Node headers at `/opt/homebrew/include/node`, which is where Homebrew's Node puts them
 - the pinned local speech files (a `whisper-cli` build and the `ggml-tiny.en.bin` model) at the paths and hashes listed in `src/caddi/desktop/speech-pins.mjs`. These are not in the repository, and the script stops if they are missing or different.
+- the pinned Node.js runtime for the agent connector. Run `node scripts/fetch-caddi-node.mjs` once; it downloads the official archive and checks it against `src/caddi/desktop/connector-pins.mjs`.
+
+Every bundle has Electron's run-as-Node, `NODE_OPTIONS` and `--inspect` fuses switched off, and the script refuses to finish if they are on. So `dist/Caddi.app/Contents/MacOS/Caddi` cannot run scripts; agents use the bundled `Contents/Resources/caddi-connector/node`.
 
 Pass `--without-speech` to build without the local speech files. Voice notes and spoken Live instructions are then unavailable in that bundle (typed Live instructions still work); everything else works.
 

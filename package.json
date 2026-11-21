@@ -1,6 +1,6 @@
 {
   "name": "caddi",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "license": "MIT",
   "description": "Caddi: a Mac browser for working with coding agents. Isolated project workspaces, on-page annotation and scoped agent access.",
@@ -54,6 +54,7 @@
     "node": ">=22.12.0"
   },
   "devDependencies": {
+    "@electron/fuses": "2.1.3",
     "electron": "45.3.2"
   },
   "repository": {

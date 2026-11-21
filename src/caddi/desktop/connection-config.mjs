@@ -44,7 +44,8 @@ export function createDesktopConnectionConfig({ projectRoot, descriptorPath, acc
       // receipt without republishing; a replaced file or runtime still fails.
       catch (error) { unavailableCode = codeFor(error); status = 'unavailable'; }
     }
-    const launch = runtime ? { command: runtime.command, args: [script, ...endpoint, '--name', 'Coding agent'], env: { ...runtime.env } }
+    const launch = runtime ? { command: runtime.command, args: [script, ...endpoint, '--name', 'Coding agent'],
+      ...(Object.keys(runtime.env).length ? { env: { ...runtime.env } } : {}) }
       : { command: 'node', args: [script, ...endpoint, '--name', 'Coding agent'] };
     return { connectionConfig: { mcpServers: { caddi: launch } },
       connectionSetup: { ...common, mode, status, code: unavailableCode } };

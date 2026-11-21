@@ -53,7 +53,7 @@ The server key is `caddi`. The tool names start with `caddi_`, an internal ident
 
 - `--rendezvous` points at a small file that Caddi rewrites on every start. It holds the address of the current local socket and nothing else. The same configuration keeps working across restarts.
 - If Caddi cannot publish that file, the dialog shows a temporary configuration with `--socket` instead. That one is only valid until Caddi quits.
-- In the downloaded app, `command` is Caddi's own executable instead of `node`, so Node.js does not need to be installed.
+- In the downloaded app, `command` is the copy of Node.js bundled inside Caddi (`Caddi.app/Contents/Resources/caddi-connector/node`) instead of `node`, so Node.js does not need to be installed. Caddi's own executable cannot run scripts. A tool set up by 0.1.4 or earlier shows Reconnect.
 - `--name` is a display label. One-click setup fills in the tool's name. It is not verified, which is why you compare the code.
 - The Agents dialog is not available in a private window.
 
