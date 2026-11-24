@@ -16,14 +16,16 @@ import { createExternalLinks } from './external-links.mjs';
 import { createSystemLifecycle } from './system-lifecycle.mjs';
 import { createOwnedSystemProof } from './owned-system-proof.mjs';
 import { publishDesktopRendezvous } from '../access/rendezvous.mjs';
-import { CONNECTOR_NODE, CONNECTOR_RESOURCE_DIRECTORY } from './connector-pins.mjs';
+import { CONNECTOR_NODE, CONNECTOR_RESOURCE_DIRECTORY, isStaleConnectorLaunch } from './connector-pins.mjs';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const packaged = app.isPackaged;
 // A coding tool set up by Caddi 0.1.4 or earlier starts the agent client with Caddi's own executable and
 // ELECTRON_RUN_AS_NODE. That no longer runs scripts, so it lands here: say what to do and leave at once,
-// before anything else starts (no window, no data folder, no single-instance lock).
-if (packaged && path.resolve(process.argv[1] ?? '') === path.join(projectRoot, 'scripts', 'caddi-desktop-client.mjs')) {
+// before anything else starts (no window, no data folder, no single-instance lock). The client script has had
+// other names (0.1.2 used another one), so recognise the launch by the switch and by any script argument,
+// never by one file name: otherwise every new agent thread opens the whole app.
+if (packaged && isStaleConnectorLaunch(process.env, process.argv.slice(1))) {
   app.dock?.hide();
   process.stderr.write('CADDI_CONNECTION_OUTDATED: This Caddi connection was set up by an earlier version. Open Caddi, then choose Reconnect for this tool in the Agents dialog.\n');
   app.exit(2);

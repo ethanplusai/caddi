@@ -2,6 +2,13 @@
 
 Notable changes to Caddi are recorded here. Caddi is pre-1.0, and anything may change between commits.
 
+## Unreleased
+
+### Fixed
+
+- **Coding tools set up by Caddi 0.1.2 no longer open Caddi.** Such a tool started Caddi with a connector script by an older name. 0.1.5 did not recognise it as an agent connection, so each new agent thread opened the whole app. Caddi now recognises any launch set up by an earlier version, prints that the connection is out of date and quits without opening anything.
+- **Reconnect works for Codex when it was already connected.** It failed with "Cannot access 'env' before initialization".
+
 ## 0.1.5 (2026-11-21)
 
 ### Security

@@ -219,8 +219,8 @@ export function createAgentTools({ home = os.homedir(), env = process.env, entry
         await command(tool, state, ['mcp', 'add-json', '--scope', 'user', SERVER, JSON.stringify({ type: 'stdio', ...server })]);
       } else {
         if (state.connected) await run(state.binary, ['mcp', 'remove', SERVER], { cwd: home, env }).catch(() => {});
-        const env = Object.entries(server.env ?? {}).flatMap(([key, value]) => ['--env', key + '=' + value]);
-        await command(tool, state, ['mcp', 'add', SERVER, ...env, '--', server.command, ...server.args]);
+        const envFlags = Object.entries(server.env ?? {}).flatMap(([key, value]) => ['--env', key + '=' + value]);
+        await command(tool, state, ['mcp', 'add', SERVER, ...envFlags, '--', server.command, ...server.args]);
       }
       if (!connected(tool)) fail('AGENT_TOOL_COMMAND_FAILED', tool.name + ' did not keep the change. Use Copy configuration instead.');
     }),

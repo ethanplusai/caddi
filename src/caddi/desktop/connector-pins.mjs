@@ -32,3 +32,12 @@ export const CONNECTOR_ENTITLEMENTS = Object.freeze({
   'com.apple.security.cs.allow-jit': true,
   'com.apple.security.cs.allow-unsigned-executable-memory': true,
 });
+
+/** True when Caddi's own executable was started the way coding tools set up by 0.1.4 or earlier start the agent
+ * client: with ELECTRON_RUN_AS_NODE, or with a script file (an absolute path) as its first argument. A person
+ * opening Caddi never does either; a web address is not a file path. */
+export function isStaleConnectorLaunch(env, args) {
+  if (typeof env?.ELECTRON_RUN_AS_NODE === 'string') return true;
+  const first = Array.isArray(args) ? args[0] : undefined;
+  return typeof first === 'string' && first.startsWith('/') && /\.(?:mjs|cjs|js)$/u.test(first);
+}

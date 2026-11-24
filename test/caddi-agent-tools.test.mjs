@@ -95,6 +95,11 @@ test('command-line tools are changed through their own command', async t => {
 
   assert.equal((await registry.disconnect('codex')).connected, false);
   assert.deepEqual(calls[2], ['codex', 'mcp', 'remove', 'caddi']);
+
+  // Reconnecting a tool that is already set up removes the old entry first, then adds the new one.
+  await registry.connect('codex');
+  assert.equal((await registry.connect('codex')).connected, true);
+  assert.deepEqual(calls.slice(4).map(call => call.slice(0, 4)), [['codex', 'mcp', 'remove', 'caddi'], ['codex', 'mcp', 'add', 'caddi']]);
 });
 
 test('a command that fails or changes nothing is reported, not assumed', async t => {

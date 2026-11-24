@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CADDI_FUSES_OFF, verifyCaddiFuses } from '../scripts/package-caddi.mjs';
-import { CONNECTOR_NODE, CONNECTOR_ENTITLEMENTS, CONNECTOR_SIGNING_IDENTIFIER } from '../src/caddi/desktop/connector-pins.mjs';
+import { CONNECTOR_NODE, CONNECTOR_ENTITLEMENTS, CONNECTOR_SIGNING_IDENTIFIER, isStaleConnectorLaunch } from '../src/caddi/desktop/connector-pins.mjs';
 import { createAgentTools } from '../src/caddi/desktop/agent-tools.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -63,4 +63,19 @@ test('a tool still set up for the current runtime is not stale', async t => {
   const tools = createAgentTools({ home, env: { PATH: '' }, entry: () => ({ command: node, args: [script, '--rendezvous', '/synthetic/runtime.json'] }) });
   await tools.connect('cursor');
   assert.equal(tools.list().find(item => item.id === 'cursor').stale, false);
+});
+
+test('a launch set up by any earlier version is recognised and closed, whatever its client script was called', () => {
+  const app = '/Applications/Caddi.app/Contents/Resources/app/scripts/';
+  // 0.1.4 (caddi-…) and 0.1.2 (an earlier name) both set ELECTRON_RUN_AS_NODE and passed a script first.
+  assert.equal(isStaleConnectorLaunch({ ELECTRON_RUN_AS_NODE: '1' }, [app + 'caddi-desktop-client.mjs', '--rendezvous', '/r']), true);
+  assert.equal(isStaleConnectorLaunch({ ELECTRON_RUN_AS_NODE: '1' }, ['/Volumes/Install Caddi/Caddi.app/x/earlier-desktop-client.mjs']), true);
+  assert.equal(isStaleConnectorLaunch({}, [app + 'earlier-desktop-client.mjs', '--rendezvous', '/r']), true, 'a tool that dropped the env still has the script');
+  assert.equal(isStaleConnectorLaunch({ ELECTRON_RUN_AS_NODE: '' }, []), true);
+  // Opening Caddi normally, or the packaged smoke entries, are not.
+  assert.equal(isStaleConnectorLaunch({}, []), false);
+  assert.equal(isStaleConnectorLaunch({}, ['--caddi-packaged-smoke']), false);
+  assert.equal(isStaleConnectorLaunch({}, ['https://example.com/page.js']), false, 'a web address is not a script');
+  const main = read('src/caddi/desktop/main.mjs');
+  assert.ok(main.indexOf('isStaleConnectorLaunch(process.env') < main.indexOf('requestSingleInstanceLock'), 'checked before anything starts');
 });
