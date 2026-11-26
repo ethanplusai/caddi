@@ -1,6 +1,6 @@
 {
   "name": "caddi",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "license": "MIT",
   "description": "Caddi: a Mac browser for working with coding agents. Isolated project workspaces, on-page annotation and scoped agent access.",

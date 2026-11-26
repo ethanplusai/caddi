@@ -2,7 +2,7 @@
 
 Notable changes to Caddi are recorded here. Caddi is pre-1.0, and anything may change between commits.
 
-## Unreleased
+## 0.1.6 (2026-11-25)
 
 ### Fixed
 
